@@ -24,6 +24,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"runtime"
 
 	logger "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -40,12 +41,15 @@ var rootCmd = &cobra.Command{
 	Short:   "Sabayon packages checker",
 	Version: commons.PKGS_CHECKER_VERSION,
 	Args:    cobra.OnlyValidArgs,
-	Example: "pkgs-checker -p /usr/portage/packages/sys-app/entropy-9999.tbz2",
+	Example: `$> pkgs-checker -p /usr/portage/packages/sys-app/entropy-9999.tbz2
+
+$> pkgs-checker -e .pyc -e .pyo -e .mo -e .bz2 --directory /usr/portage/packages/`,
 
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if settings.GetBool("stdin") == false &&
-			len(settings.GetStringSlice("package")) == 0 {
-			fmt.Println("No package supply or stdin option is not present.")
+			len(settings.GetStringSlice("package")) == 0 &&
+			settings.GetString("directory") == "" {
+			fmt.Println("Both package and directory not present or stdin option is not present.")
 			os.Exit(1)
 		}
 	},
@@ -53,13 +57,21 @@ var rootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		initLogging()
 
+		var err error
+		var checker commons.CheckerExecutor
+
 		logger.WithFields(logger.Fields{
 			"package": settings.GetStringSlice("package"),
+			"dir":     settings.GetString("directory"),
 			"stdin":   settings.GetBool("stdin"),
-		}).Infof("[*] Calculate hashing of %s.",
-			settings.GetStringSlice("package"))
+		}).Debugf("[*] Starting Calculate hashing...")
 
-		var checker, err = commons.New(settings.GetViper(), logger.StandardLogger())
+		if settings.GetBool("concurrency") == true {
+			initConcurrency()
+			checker, err = commons.NewCheckerConcurrent(settings.GetViper(), logger.StandardLogger())
+		} else {
+			checker, err = commons.NewChecker(settings.GetViper(), logger.StandardLogger())
+		}
 		if err != nil {
 			panic("Error on create Checker object")
 		}
@@ -74,6 +86,16 @@ var rootCmd = &cobra.Command{
 		}
 
 	},
+}
+
+func initConcurrency() {
+	if settings.GetInt("maxconcurrency") > runtime.NumCPU() {
+		logger.Warnf("maxconcurrency value %d is bigger of number of host CPU. I force %d.",
+			settings.GetInt("maxconcurrency"), runtime.NumCPU())
+		settings.Set("maxconcurrency", runtime.NumCPU())
+	}
+
+	runtime.GOMAXPROCS(settings.GetInt("maxconcurrency"))
 }
 
 func initLogging() {
@@ -120,16 +142,24 @@ func initLogging() {
 func init() {
 	// Initialize command flags and settings binding
 	rootCmd.PersistentFlags().Bool("stdin", false, "Read package data from stdin")
-	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose logging")
+	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose logging on stdout.")
+	rootCmd.PersistentFlags().BoolP("concurrency", "c", false, "Enable concurrency process.")
 	rootCmd.PersistentFlags().StringSliceP("package", "p", []string{}, "Path of package to check.")
 	rootCmd.PersistentFlags().StringSliceP("ignore", "i", []string{}, "File to ignore.")
 	rootCmd.PersistentFlags().StringSliceP("ignore-extension", "e", []string{}, "Extension to ignore.")
 	rootCmd.PersistentFlags().StringP("logfile", "l", "", "Logfile Path. Optional.")
 	rootCmd.PersistentFlags().StringP("loglevel", "L", "INFO", `Set logging level.
 [DEBUG, INFO, WARN, ERROR]`)
+	rootCmd.PersistentFlags().StringP("directory", "d", "", "Artefacts directory with .tbz2 files.")
+	rootCmd.PersistentFlags().StringP("hashfile", "f", "", `Path of hashfile where write checksum.
+Default output on stdout with format: HASH <CHECKSUM> <PACKAGE>`)
 	settings.BindPFlag("stdin", rootCmd.PersistentFlags().Lookup("stdin"))
 	settings.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
 	settings.BindPFlag("package", rootCmd.PersistentFlags().Lookup("package"))
+	settings.BindPFlag("directory", rootCmd.PersistentFlags().Lookup("directory"))
+	settings.BindPFlag("hashfile", rootCmd.PersistentFlags().Lookup("hashfile"))
+	settings.BindPFlag("concurrency", rootCmd.PersistentFlags().Lookup("concurrency"))
+
 	settings.BindPFlag("logfile", rootCmd.PersistentFlags().Lookup("logfile"))
 	settings.BindPFlag("loglevel", rootCmd.PersistentFlags().Lookup("loglevel"))
 	settings.BindPFlag("ignoreFiles", rootCmd.PersistentFlags().Lookup("ignore"))

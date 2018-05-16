@@ -23,22 +23,38 @@ import (
 	"archive/tar"
 	"compress/bzip2"
 	"errors"
+	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	logger "github.com/sirupsen/logrus"
 	viper "github.com/spf13/viper"
 )
 
+type CheckerExecutor interface {
+	AddPackage(p *Package) error
+	Run() error
+	GetPackages() []Package
+}
+
 type Checker struct {
 	settings *viper.Viper
 	logger   *logger.Logger
 	packages []Package
+	mutex    sync.Mutex
 }
 
-func New(settings *viper.Viper, l *logger.Logger) (*Checker, error) {
+// I use anonymous field to override
+// Run and other methods
+type CheckerConcurrent struct {
+	*Checker
+}
+
+func NewChecker(settings *viper.Viper, l *logger.Logger) (*Checker, error) {
 
 	var log *logger.Logger = nil
 	if settings == nil {
@@ -54,6 +70,16 @@ func New(settings *viper.Viper, l *logger.Logger) (*Checker, error) {
 	logger.Debug("Created new Checker object")
 
 	return &Checker{settings: settings, logger: log, packages: []Package{}}, nil
+}
+
+func NewCheckerConcurrent(settings *viper.Viper, l *logger.Logger) (*CheckerConcurrent, error) {
+
+	var c, err = NewChecker(settings, l)
+	if err != nil {
+		return nil, err
+	}
+
+	return &CheckerConcurrent{c}, nil
 }
 
 func checkPackage(pkg string) (string, error) {
@@ -131,7 +157,6 @@ func (c *Checker) processTarBz2(pkg string, abs string) error {
 
 	var p *Package
 	var tarbz2 io.Reader
-	//var global_md5 = md5.New()
 	var f, err = os.Open(abs)
 	if err != nil {
 		return err
@@ -192,7 +217,134 @@ func (c *Checker) processTarBz2(pkg string, abs string) error {
 
 	c.logger.Infof("[%s] %s", pkg, p)
 
+	c.AddPackage(p)
+
+	return err
+}
+
+func (c *Checker) AddPackage(p *Package) error {
+
+	if p == nil {
+		return errors.New("Invalid package")
+	}
+
+	c.mutex.Lock()
+
 	c.packages = append(c.packages, *p)
+
+	c.mutex.Unlock()
+
+	return nil
+}
+
+func (c *Checker) processPackage(pkg string) error {
+	var err error = nil
+
+	c.logger.Debugf("[%s] Checking package...", filepath.Base(pkg))
+
+	var absp, extension, pkgname string
+	absp, err = checkPackage(pkg)
+	if err != nil {
+		c.logger.Errorf("[%s] Error: %s", filepath.Base(pkg), err)
+		return err
+	}
+	pkgname = filepath.Base(filepath.Dir(absp)) + "/" + filepath.Base(pkg)
+
+	c.logger.Debugf("[%s] File %s checking OK.", pkgname, absp)
+
+	extension = filepath.Ext(absp)
+
+	if extension == ".tbz2" || strings.HasSuffix(filepath.Base(pkg), ".tar.bz2") {
+		err = c.processTarBz2(pkgname, absp)
+		if err != nil {
+			c.logger.Errorf("[%s] Error: %s", pkgname, err)
+			return err
+		}
+	} else {
+		c.logger.Errorf("[%s] File with extension %s not supported.", pkgname)
+		err = errors.New("Extension not supported")
+	}
+
+	return err
+}
+
+func (c *Checker) processPackages(pkgs []string) error {
+	var err error
+	var okCounter, n_pkgs int
+
+	okCounter = 0
+	n_pkgs = len(pkgs)
+
+	for _, pkg := range pkgs {
+		err = c.processPackage(pkg)
+		if err == nil {
+			okCounter++
+		}
+	}
+
+	c.logger.Infof("For %d packages: %d OK, %d KO.",
+		n_pkgs, okCounter, n_pkgs-okCounter)
+
+	return err
+}
+
+func (c *Checker) findPackages(dir string) ([]string, error) {
+
+	var err error
+	var ans []string
+	var files []os.FileInfo
+
+	files, err = ioutil.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, f := range files {
+		c.logger.Debugf("For dir %s found child %s",
+			dir, f.Name())
+		if f.IsDir() {
+			var child []string
+
+			child, err = c.findPackages(fmt.Sprintf("%s/%s", dir, f.Name()))
+			if err != nil {
+				return nil, err
+			}
+			for _, childFile := range child {
+				ans = append(ans, childFile)
+			}
+		} else {
+			var ext string = filepath.Ext(f.Name())
+			if ext == ".tbz2" {
+				ans = append(ans, fmt.Sprintf("%s/%s", dir, f.Name()))
+			}
+		}
+	}
+
+	return ans, err
+}
+
+func (c *Checker) processDirectory(dir string) error {
+	var err error
+	var files []string
+
+	files, err = c.findPackages(dir)
+	if err != nil {
+		return err
+	}
+	err = c.processPackages(files)
+
+	return err
+}
+
+func (c *CheckerConcurrent) processDirectory(dir string) error {
+	var err error
+	var files []string
+
+	files, err = c.findPackages(dir)
+	if err != nil {
+		return err
+	}
+	err = c.processPackages(files)
 
 	return err
 }
@@ -200,44 +352,89 @@ func (c *Checker) processTarBz2(pkg string, abs string) error {
 func (c *Checker) Run() error {
 
 	var err error
+
+	// Elaborate list of packages if present
+	if len(c.settings.GetStringSlice("package")) > 0 {
+		err = c.processPackages(c.settings.GetStringSlice("package"))
+		if err != nil {
+			return err
+		}
+	}
+
+	// Elaborate .tbz2 file under directory
+	if c.settings.GetString("directory") != "" {
+		err = c.processDirectory(c.settings.GetString("directory"))
+	}
+
+	// TODO: process stdin
+
+	return err
+}
+
+// Override processPackages for use gorouting for CheckerConcurrent struct
+func (c *CheckerConcurrent) processPackages(pkgs []string) error {
+	var err error
+	var i int
+	var ch chan ChannelResp = make(chan ChannelResp, c.settings.GetInt("maxconcurrency"))
 	var okCounter, n_pkgs int
-	var pkgs = c.settings.GetStringSlice("package")
 
 	okCounter = 0
-	n_pkgs = len(c.settings.GetStringSlice("package"))
+	n_pkgs = len(pkgs)
 
 	for _, pkg := range pkgs {
-		c.logger.Infof("[%s] Checking package...", filepath.Base(pkg))
+		c.logger.Debugf("Starting gorouting for package %s...\n", pkg)
+		go c.go2ProcessPackage(ch, pkg)
+	}
 
-		var absp, extension, pkgname string
-		absp, err = checkPackage(pkg)
-		if err != nil {
-			c.logger.Errorf("[%s] Error: %s", filepath.Base(pkg), err)
-			continue
-		}
-		pkgname = filepath.Base(filepath.Dir(absp)) + "/" + filepath.Base(pkg)
-
-		c.logger.Debugf("[%s] File %s checking OK.", pkgname, absp)
-
-		extension = filepath.Ext(absp)
-
-		if extension == ".tbz2" || strings.HasSuffix(filepath.Base(pkg), ".tar.bz2") {
-			err = c.processTarBz2(pkgname, absp)
-			if err != nil {
-				c.logger.Errorf("[%s] Error: %s", pkgname, err)
-				continue
-			}
+	for i = 0; i < n_pkgs; i++ {
+		resp := <-ch
+		if resp.Error == nil {
+			c.logger.Debugf("[%s] Received response: OK\n", resp.Result)
+			okCounter++
 		} else {
-			c.logger.Errorf("[%s] File with extension %s not supported.", pkgname)
+			c.logger.Debugf("[%s] Received response: KO\n", resp.Result)
 		}
-
-		okCounter++
 	}
 
 	c.logger.Infof("For %d packages: %d OK, %d KO.",
 		n_pkgs, okCounter, n_pkgs-okCounter)
 
+	if okCounter != n_pkgs {
+		err = errors.New("Something goes wrong")
+	}
+
 	return err
+}
+
+func (c *CheckerConcurrent) Run() error {
+
+	var err error
+
+	// Elaborate list of packages if present
+	if len(c.settings.GetStringSlice("package")) > 0 {
+		err = c.processPackages(c.settings.GetStringSlice("package"))
+		if err != nil {
+			return err
+		}
+	}
+
+	// Elaborate .tbz2 file under directory
+	if c.settings.GetString("directory") != "" {
+		err = c.processDirectory(c.settings.GetString("directory"))
+	}
+
+	// TODO: process stdin
+
+	return err
+}
+
+func (c *CheckerConcurrent) go2ProcessPackage(channel chan ChannelResp,
+	pkg string) {
+	var err error
+	c.logger.Debugf("[%s] Starting goroutine", pkg)
+	err = c.processPackage(pkg)
+	channel <- NewChannelResp(pkg, err)
+	c.logger.Debugf("[%s] End goroutine", pkg)
 }
 
 func (c *Checker) GetPackages() []Package {

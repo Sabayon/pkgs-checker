@@ -31,16 +31,24 @@ func main() {
 	// On default doesn't read data from stdin
 	settings.SetDefault("stdin", false)
 	settings.SetDefault("verbose", false)
-	settings.SetDefault("loglevel", "INFO")
+	settings.SetDefault("loglevel", "WARN")
 
-	// For string nil is not possible. I use empty string.
 	settings.SetDefault("package", nil)
 	settings.SetDefault("ignoreFiles", nil)
 	settings.SetDefault("ignoreExt", nil)
+	// For string nil is not possible. I use empty string.
+	settings.SetDefault("directory", "")
+	settings.SetDefault("hashfile", nil)
+	settings.SetDefault("concurrency", false)
+	settings.SetDefault("maxconcurrency", 10)
 	settings.SetEnvPrefix("PKGS_CHECKER")
 	settings.BindEnv("logfile")
 	settings.BindEnv("loglevel")
 	settings.BindEnv("verbose")
+	settings.BindEnv("hashfile")
+	settings.BindEnv("directory")
+	settings.BindEnv("concurrency")
+	settings.BindEnv("maxconcurrency")
 
 	checker.Execute()
 }
