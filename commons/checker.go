@@ -42,10 +42,11 @@ type CheckerExecutor interface {
 }
 
 type Checker struct {
-	settings *viper.Viper
-	logger   *logger.Logger
-	packages []Package
-	mutex    sync.Mutex
+	settings     *viper.Viper
+	logger       *logger.Logger
+	packages     []Package
+	mutex        sync.Mutex
+	elabPackages func(pkgs []string) error
 }
 
 // I use anonymous field to override
@@ -69,7 +70,15 @@ func NewChecker(settings *viper.Viper, l *logger.Logger) (*Checker, error) {
 
 	logger.Debug("Created new Checker object")
 
-	return &Checker{settings: settings, logger: log, packages: []Package{}}, nil
+	var c = &Checker{
+		settings: settings,
+		logger:   log,
+		packages: []Package{},
+	}
+
+	c.elabPackages = c.processPackages
+
+	return c, nil
 }
 
 func NewCheckerConcurrent(settings *viper.Viper, l *logger.Logger) (*CheckerConcurrent, error) {
@@ -79,7 +88,10 @@ func NewCheckerConcurrent(settings *viper.Viper, l *logger.Logger) (*CheckerConc
 		return nil, err
 	}
 
-	return &CheckerConcurrent{c}, nil
+	var cc = &CheckerConcurrent{c}
+	cc.elabPackages = cc.processPackages
+
+	return cc, nil
 }
 
 func checkPackage(pkg string) (string, error) {
@@ -331,20 +343,7 @@ func (c *Checker) processDirectory(dir string) error {
 	if err != nil {
 		return err
 	}
-	err = c.processPackages(files)
-
-	return err
-}
-
-func (c *CheckerConcurrent) processDirectory(dir string) error {
-	var err error
-	var files []string
-
-	files, err = c.findPackages(dir)
-	if err != nil {
-		return err
-	}
-	err = c.processPackages(files)
+	err = c.elabPackages(files)
 
 	return err
 }
@@ -355,7 +354,7 @@ func (c *Checker) Run() error {
 
 	// Elaborate list of packages if present
 	if len(c.settings.GetStringSlice("package")) > 0 {
-		err = c.processPackages(c.settings.GetStringSlice("package"))
+		err = c.elabPackages(c.settings.GetStringSlice("package"))
 		if err != nil {
 			return err
 		}
@@ -402,28 +401,6 @@ func (c *CheckerConcurrent) processPackages(pkgs []string) error {
 	if okCounter != n_pkgs {
 		err = errors.New("Something goes wrong")
 	}
-
-	return err
-}
-
-func (c *CheckerConcurrent) Run() error {
-
-	var err error
-
-	// Elaborate list of packages if present
-	if len(c.settings.GetStringSlice("package")) > 0 {
-		err = c.processPackages(c.settings.GetStringSlice("package"))
-		if err != nil {
-			return err
-		}
-	}
-
-	// Elaborate .tbz2 file under directory
-	if c.settings.GetString("directory") != "" {
-		err = c.processDirectory(c.settings.GetString("directory"))
-	}
-
-	// TODO: process stdin
 
 	return err
 }

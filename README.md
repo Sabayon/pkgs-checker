@@ -44,10 +44,8 @@ Flags:
 
 ```
 
-## Features to Complete for release 0.1.0
+## Task for Next Release:
 
   * Add support to stdin processing
 
   * Add support to different checksum algorithms
-
-  * Add support for directly create hashing file

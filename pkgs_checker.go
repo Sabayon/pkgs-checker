@@ -38,7 +38,7 @@ func main() {
 	settings.SetDefault("ignoreExt", nil)
 	// For string nil is not possible. I use empty string.
 	settings.SetDefault("directory", "")
-	settings.SetDefault("hashfile", nil)
+	settings.SetDefault("hashfile", "")
 	settings.SetDefault("concurrency", false)
 	settings.SetDefault("maxconcurrency", 10)
 	settings.SetEnvPrefix("PKGS_CHECKER")

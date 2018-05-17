@@ -77,15 +77,43 @@ $> pkgs-checker -e .pyc -e .pyo -e .mo -e .bz2 --directory /usr/portage/packages
 		}
 
 		err = checker.Run()
-		if err != nil {
-			panic(err)
-		}
+		checkErr(err)
 
-		for _, p := range checker.GetPackages() {
-			fmt.Printf("HASH %s %s\n", p.CheckSum(), p.Name())
+		if settings.GetString("hashfile") != "" {
+			writeHashfile(checker)
+		} else {
+			for _, p := range checker.GetPackages() {
+				fmt.Printf("HASH %s %s\n", p.CheckSum(), p.Name())
+			}
 		}
 
 	},
+}
+
+func checkErr(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
+func writeHashfile(checker commons.CheckerExecutor) {
+	var err error
+	var hashfile *os.File
+
+	hashfile, err = os.OpenFile(
+		settings.GetString("hashfile"),
+		os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0660)
+	if err != nil {
+		panic(fmt.Sprintf("Error on open hashfile ", settings.GetString("hashfile")))
+	}
+	defer hashfile.Close()
+
+	for _, p := range checker.GetPackages() {
+		_, err = fmt.Fprintf(hashfile, "%s %s\n", p.CheckSum(), p.Name())
+		checkErr(err)
+	}
+
+	hashfile.Sync()
 }
 
 func initConcurrency() {
