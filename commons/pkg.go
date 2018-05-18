@@ -44,6 +44,8 @@ type Package struct {
 	logger   *logger.Logger
 }
 
+type PackageSorter []Package
+
 func NewPackage(pkg string, l *logger.Logger) (*Package, error) {
 
 	var log *logger.Logger = nil
@@ -164,3 +166,7 @@ func (p *Package) CalculateCRC() error {
 
 	return nil
 }
+
+func (p PackageSorter) Len() int           { return len(p) }
+func (p PackageSorter) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+func (p PackageSorter) Less(i, j int) bool { return p[i].pkg < p[j].pkg }

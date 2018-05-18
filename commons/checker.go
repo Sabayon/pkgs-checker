@@ -28,6 +28,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 
@@ -348,6 +349,14 @@ func (c *Checker) processDirectory(dir string) error {
 	return err
 }
 
+func (c *Checker) sortPackages() {
+	c.mutex.Lock()
+
+	sort.Sort(PackageSorter(c.packages))
+
+	c.mutex.Unlock()
+}
+
 func (c *Checker) Run() error {
 
 	var err error
@@ -366,6 +375,9 @@ func (c *Checker) Run() error {
 	}
 
 	// TODO: process stdin
+
+	// Sort package list
+	c.sortPackages()
 
 	return err
 }
