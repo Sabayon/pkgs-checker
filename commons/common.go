@@ -19,4 +19,4 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package commons
 
-const PKGS_CHECKER_VERSION = "0.1.2"
+const PKGS_CHECKER_VERSION = "0.1.3"
