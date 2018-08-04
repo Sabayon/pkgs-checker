@@ -49,6 +49,7 @@ func main() {
 	settings.BindEnv("directory")
 	settings.BindEnv("concurrency")
 	settings.BindEnv("maxconcurrency")
+	settings.BindEnv("hash-empty")
 
 	checker.Execute()
 }

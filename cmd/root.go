@@ -172,6 +172,8 @@ func init() {
 	rootCmd.PersistentFlags().Bool("stdin", false, "Read package data from stdin")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose logging on stdout.")
 	rootCmd.PersistentFlags().BoolP("concurrency", "c", false, "Enable concurrency process.")
+	rootCmd.PersistentFlags().Bool("hash-empty", false,
+		fmt.Sprintf("If create a fake hash for empty packages or use %s.", commons.PKGS_CHECKER_EMPTY_PKGHASH))
 	rootCmd.PersistentFlags().StringSliceP("package", "p", []string{}, "Path of package to check.")
 	rootCmd.PersistentFlags().StringSliceP("ignore", "i", []string{}, "File to ignore.")
 	rootCmd.PersistentFlags().StringSliceP("ignore-extension", "e", []string{}, "Extension to ignore.")
@@ -181,13 +183,14 @@ func init() {
 	rootCmd.PersistentFlags().StringP("directory", "d", "", "Artefacts directory with .tbz2 files.")
 	rootCmd.PersistentFlags().StringP("hashfile", "f", "", `Path of hashfile where write checksum.
 Default output on stdout with format: HASH <CHECKSUM> <PACKAGE>`)
+
 	settings.BindPFlag("stdin", rootCmd.PersistentFlags().Lookup("stdin"))
 	settings.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
 	settings.BindPFlag("package", rootCmd.PersistentFlags().Lookup("package"))
 	settings.BindPFlag("directory", rootCmd.PersistentFlags().Lookup("directory"))
 	settings.BindPFlag("hashfile", rootCmd.PersistentFlags().Lookup("hashfile"))
 	settings.BindPFlag("concurrency", rootCmd.PersistentFlags().Lookup("concurrency"))
-
+	settings.BindPFlag("hash-empty", rootCmd.PersistentFlags().Lookup("hash-empty"))
 	settings.BindPFlag("logfile", rootCmd.PersistentFlags().Lookup("logfile"))
 	settings.BindPFlag("loglevel", rootCmd.PersistentFlags().Lookup("loglevel"))
 	settings.BindPFlag("ignoreFiles", rootCmd.PersistentFlags().Lookup("ignore"))

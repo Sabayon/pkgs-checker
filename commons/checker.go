@@ -22,8 +22,11 @@ package commons
 import (
 	"archive/tar"
 	"compress/bzip2"
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"hash"
 	"io"
 	"io/ioutil"
 	"os"
@@ -227,6 +230,12 @@ func (c *Checker) processTarBz2(pkg string, abs string) error {
 	}
 
 	err = p.CalculateCRC()
+	if strings.Compare(p.checksum, PKGS_CHECKER_EMPTY_PKGHASH) == 0 &&
+		c.settings.GetBool("hash-empty") {
+		var fake_hash hash.Hash = md5.New()
+		var h []byte = fake_hash.Sum(nil)
+		p.checksum = hex.EncodeToString(h)
+	}
 
 	c.logger.Infof("[%s] %s", pkg, p)
 
