@@ -133,17 +133,6 @@ func initLogging() {
 		FullTimestamp: true,
 	})
 
-	// Configure logging
-	if settings.GetString("loglevel") == "" || settings.GetString("loglevel") == "INFO" {
-		logger.SetLevel(logger.InfoLevel)
-	} else if settings.GetString("loglevel") == "ERROR" {
-		logger.SetLevel(logger.ErrorLevel)
-	} else if settings.GetString("loglevel") == "WARN" {
-		logger.SetLevel(logger.WarnLevel)
-	} else if settings.GetString("loglevel") == "DEBUG" {
-		logger.SetLevel(logger.DebugLevel)
-	}
-
 	if settings.GetString("logfile") != "" {
 		var err error
 		logFile, err = os.OpenFile(
@@ -163,6 +152,17 @@ func initLogging() {
 		logger.SetOutput(os.Stdout)
 	} else {
 		logger.SetOutput(ioutil.Discard)
+	}
+
+	// Configure logging
+	if settings.GetString("loglevel") == "" || settings.GetString("loglevel") == "INFO" {
+		logger.SetLevel(logger.InfoLevel)
+	} else if settings.GetString("loglevel") == "ERROR" {
+		logger.SetLevel(logger.ErrorLevel)
+	} else if settings.GetString("loglevel") == "WARN" {
+		logger.SetLevel(logger.WarnLevel)
+	} else if settings.GetString("loglevel") == "DEBUG" {
+		logger.SetLevel(logger.DebugLevel)
 	}
 
 }
