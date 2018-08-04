@@ -19,5 +19,5 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package commons
 
-const PKGS_CHECKER_VERSION = "0.2.0"
+const PKGS_CHECKER_VERSION = "0.2.1"
 const PKGS_CHECKER_EMPTY_PKGHASH = "00000000000000000000000000000000"
