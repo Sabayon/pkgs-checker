@@ -29,6 +29,7 @@ $> pkgs-checker -e .pyc -e .pyo -e .mo -e .bz2 --directory /usr/portage/packages
 Flags:
   -c, --concurrency                Enable concurrency process.
   -d, --directory string           Artefacts directory with .tbz2 files.
+      --hash-empty                 If create a fake hash for empty packages or use 00000000000000000000000000000000.
   -f, --hashfile string            Path of hashfile where write checksum.
                                    Default output on stdout with format: HASH <CHECKSUM> <PACKAGE>
   -h, --help                       help for this command
