@@ -403,7 +403,7 @@ func (c *CheckerConcurrent) processPackages(pkgs []string) error {
 			c.logger.Debugf("[%s] Received response: OK\n", resp.Result)
 			okCounter++
 		} else {
-			c.logger.Debugf("[%s] Received response: KO\n", resp.Result)
+			c.logger.Errorf("[%s] Received response: KO\n", resp.Result)
 		}
 	}
 

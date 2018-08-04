@@ -135,6 +135,7 @@ func (p *Package) CalculateCRC() error {
 	var pmd5 hash.Hash = md5.New()
 
 	if len(p.files) == 0 && len(p.dirs) == 0 {
+		p.logger.Errorf("[%s] Error: No directories or files found for CRC.\n", p.pkg)
 		return errors.New("No dirs and files found for CRC")
 	}
 
