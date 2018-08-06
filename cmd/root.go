@@ -83,7 +83,10 @@ $> pkgs-checker -e .pyc -e .pyo -e .mo -e .bz2 --directory /usr/portage/packages
 			writeHashfile(checker)
 		} else {
 			for _, p := range checker.GetPackages() {
-				fmt.Printf("HASH %s %s\n", p.CheckSum(), p.Name())
+				// Skip package in errors from file
+				if p.CheckSum() != "" {
+					fmt.Printf("HASH %s %s\n", p.CheckSum(), p.Name())
+				}
 			}
 		}
 
@@ -109,7 +112,10 @@ func writeHashfile(checker commons.CheckerExecutor) {
 	defer hashfile.Close()
 
 	for _, p := range checker.GetPackages() {
-		_, err = fmt.Fprintf(hashfile, "%s %s\n", p.CheckSum(), p.Name())
+		// Skip package in errors from file
+		if p.CheckSum() != "" {
+			_, err = fmt.Fprintf(hashfile, "%s %s\n", p.CheckSum(), p.Name())
+		}
 		checkErr(err)
 	}
 
@@ -163,6 +169,9 @@ func initLogging() {
 		logger.SetLevel(logger.WarnLevel)
 	} else if settings.GetString("loglevel") == "DEBUG" {
 		logger.SetLevel(logger.DebugLevel)
+	} else {
+		// For invalid loglevel force INFO
+		logger.SetLevel(logger.InfoLevel)
 	}
 
 }
@@ -174,6 +183,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolP("concurrency", "c", false, "Enable concurrency process.")
 	rootCmd.PersistentFlags().Bool("hash-empty", false,
 		fmt.Sprintf("If create a fake hash for empty packages or use %s.", commons.PKGS_CHECKER_EMPTY_PKGHASH))
+	rootCmd.PersistentFlags().Bool("ignore-errors", false, "Ignore errors with broken tarball.")
 	rootCmd.PersistentFlags().StringSliceP("package", "p", []string{}, "Path of package to check.")
 	rootCmd.PersistentFlags().StringSliceP("ignore", "i", []string{}, "File to ignore.")
 	rootCmd.PersistentFlags().StringSliceP("ignore-extension", "e", []string{}, "Extension to ignore.")
@@ -195,6 +205,7 @@ Default output on stdout with format: HASH <CHECKSUM> <PACKAGE>`)
 	settings.BindPFlag("loglevel", rootCmd.PersistentFlags().Lookup("loglevel"))
 	settings.BindPFlag("ignoreFiles", rootCmd.PersistentFlags().Lookup("ignore"))
 	settings.BindPFlag("ignoreExt", rootCmd.PersistentFlags().Lookup("ignore-extension"))
+	settings.BindPFlag("ignoreErrors", rootCmd.PersistentFlags().Lookup("ignore-errors"))
 }
 
 func Execute() {

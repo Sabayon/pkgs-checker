@@ -203,8 +203,6 @@ func (c *Checker) processTarBz2(pkg string, abs string) error {
 			return err
 		}
 
-		//var fi = header.FileInfo()
-
 		var isDir = false
 		var toSkip = false
 
@@ -283,7 +281,11 @@ func (c *Checker) processPackage(pkg string) error {
 			return err
 		}
 	} else {
-		c.logger.Errorf("[%s] File with extension %s not supported.", pkgname)
+		if extension == "" {
+			c.logger.Errorf("[%s] File without extension not supported.", pkgname)
+		} else {
+			c.logger.Errorf("[%s] File with extension %s not supported.", pkgname)
+		}
 		err = errors.New("Extension not supported")
 	}
 
@@ -306,6 +308,16 @@ func (c *Checker) processPackages(pkgs []string) error {
 
 	c.logger.Infof("For %d packages: %d OK, %d KO.",
 		n_pkgs, okCounter, n_pkgs-okCounter)
+
+	if okCounter != n_pkgs {
+		if c.settings.GetBool("ignoreErrors") {
+			c.logger.Infof("Broken packages: %d. I ignore it.",
+				n_pkgs-okCounter)
+			err = nil
+		} else {
+			err = errors.New("Something goes wrong")
+		}
+	}
 
 	return err
 }
@@ -420,7 +432,12 @@ func (c *CheckerConcurrent) processPackages(pkgs []string) error {
 		n_pkgs, okCounter, n_pkgs-okCounter)
 
 	if okCounter != n_pkgs {
-		err = errors.New("Something goes wrong")
+		if c.settings.GetBool("ignoreErrors") {
+			c.logger.Infof("Broken packages: %d. I ignore it.",
+				n_pkgs-okCounter)
+		} else {
+			err = errors.New("Something goes wrong")
+		}
 	}
 
 	return err
