@@ -31,7 +31,7 @@ func main() {
 	// On default doesn't read data from stdin
 	settings.SetDefault("stdin", false)
 	settings.SetDefault("verbose", false)
-	settings.SetDefault("loglevel", "WARN")
+	settings.SetDefault("loglevel", "INFO")
 
 	settings.SetDefault("package", nil)
 	settings.SetDefault("ignoreFiles", nil)
