@@ -38,7 +38,7 @@ var rootCmd = &cobra.Command{
 	Version: commons.PKGS_CHECKER_VERSION,
 	Args:    cobra.OnlyValidArgs,
 
-	PreRun: func(cmd *cobra.Command, args []string) {
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		logFile = commons.InitLogging()
 	},
 }
@@ -58,6 +58,7 @@ func init() {
 
 	rootCmd.AddCommand(
 		newHashCommand(),
+		newFilterCommand(),
 	)
 }
 

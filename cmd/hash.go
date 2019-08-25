@@ -1,6 +1,6 @@
 /*
 
-Copyright (C) 2017-2018  Daniele Rondina <geaaru@sabayonlinux.org>
+Copyright (C) 2017-2019  Daniele Rondina <geaaru@sabayonlinux.org>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -122,7 +122,7 @@ func writeHashfile(checker commons.CheckerExecutor) {
 		settings.GetString("hashfile"),
 		os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0660)
 	if err != nil {
-		panic(fmt.Sprintf("Error on open hashfile ", settings.GetString("hashfile")))
+		panic(fmt.Sprintf("Error on open hashfile %s.", settings.GetString("hashfile")))
 	}
 	defer hashfile.Close()
 

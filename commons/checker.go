@@ -284,7 +284,7 @@ func (c *Checker) processPackage(pkg string) error {
 		if extension == "" {
 			c.logger.Errorf("[%s] File without extension not supported.", pkgname)
 		} else {
-			c.logger.Errorf("[%s] File with extension %s not supported.", pkgname)
+			c.logger.Errorf("[%s] File with extension %s not supported.", pkgname, extension)
 		}
 		err = errors.New("Extension not supported")
 	}
