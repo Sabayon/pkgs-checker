@@ -19,7 +19,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package commons
 
 import (
+	"bytes"
 	"errors"
+	"path/filepath"
 	"strings"
 
 	yaml "github.com/go-yaml/yaml"
@@ -29,6 +31,7 @@ import (
 type SarkConfig struct {
 	Viper *v.Viper
 
+	Id         string
 	Repository SarkRepository   `mapstructure:"repository" yaml:"repository,omitempty"`
 	Build      SarkBuild        `mapstructure:"build" yaml:"build,omitempty"`
 	Injector   SarkInjectConfig `mapstructure:"injector" yaml:"injector,omitempty"`
@@ -131,7 +134,7 @@ func (s *SarkConfig) unmarshalAndVerify() error {
 
 	filterType := s.Injector.Filter.FilterType
 	if filterType != "" && filterType != "whitelist" && filterType != "blacklist" {
-		return errors.New("Invalid or missing filter type")
+		return errors.New("Invalid filter type")
 	}
 
 	return nil
@@ -164,8 +167,36 @@ func NewSarkConfigFromString(viper *v.Viper, config string) (*SarkConfig, error)
 	return ans, err
 }
 
+func NewSarkConfigFromBytes(viper *v.Viper, data []byte) (*SarkConfig, error) {
+	var ans *SarkConfig
+	var err error
+
+	if data == nil || len(data) == 0 {
+		return nil, errors.New("Invalid configuration")
+	}
+
+	if viper == nil {
+		viper = v.New()
+	}
+
+	viper.SetConfigType("yaml")
+	err = viper.ReadConfig(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+
+	ans = &SarkConfig{
+		Viper: viper,
+	}
+
+	err = ans.unmarshalAndVerify()
+
+	return ans, err
+}
+
 func NewSarkConfigFromFile(viper *v.Viper, file string) (*SarkConfig, error) {
 	var ans *SarkConfig
+	var id string
 	var err error
 
 	if file == "" {
@@ -182,8 +213,14 @@ func NewSarkConfigFromFile(viper *v.Viper, file string) (*SarkConfig, error) {
 		return nil, err
 	}
 
+	id, err = filepath.Abs(file)
+	if err != nil {
+		return nil, err
+	}
+
 	ans = &SarkConfig{
 		Viper: viper,
+		Id:    id,
 	}
 
 	err = ans.unmarshalAndVerify()
@@ -201,13 +238,17 @@ func NewSarkConfig(viper *v.Viper, filterType string) (*SarkConfig, error) {
 	}
 
 	return &SarkConfig{
-		Injector: SarkInjectConfig{
-			Filter: SarkInjectFilterConfig{
-				FilterType: filterType,
-				Rules:      make([]SarkFilterRuleConf, 0),
-			},
-		},
+		Injector: *NewSarkInjectConfig(filterType),
 	}, nil
+}
+
+func NewSarkInjectConfig(filterType string) *SarkInjectConfig {
+	return &SarkInjectConfig{
+		Filter: SarkInjectFilterConfig{
+			FilterType: filterType,
+			Rules:      make([]SarkFilterRuleConf, 0),
+		},
+	}
 }
 
 func NewSarkFilterRuleConf(desc string) *SarkFilterRuleConf {

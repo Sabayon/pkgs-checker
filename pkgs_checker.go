@@ -41,6 +41,8 @@ func main() {
 	settings.SetDefault("hashfile", "")
 	settings.SetDefault("concurrency", false)
 	settings.SetDefault("maxconcurrency", 10)
+	settings.SetDefault("apikey", "")
+	settings.SetDefault("insecure_skipverify", false)
 	settings.SetEnvPrefix("PKGS_CHECKER")
 	settings.BindEnv("logfile")
 	settings.BindEnv("loglevel")
@@ -50,6 +52,8 @@ func main() {
 	settings.BindEnv("concurrency")
 	settings.BindEnv("maxconcurrency")
 	settings.BindEnv("hash-empty")
+	settings.BindEnv("apikey")
+	settings.BindEnv("insecure_skipverify")
 
 	checker.Execute()
 }

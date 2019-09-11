@@ -21,6 +21,8 @@ package commons_test
 
 import (
 	"fmt"
+	"os"
+	"path"
 
 	. "github.com/Sabayon/pkgs-checker/commons"
 
@@ -140,6 +142,10 @@ build:
 			It("Check attributes", func() {
 				Expect(sark.Build.Equo.Packages.Install).To(Equal([]string{"dev-lang/swig"}))
 			})
+
+			It("Check id", func() {
+				Expect(sark.Id).To(Equal(""))
+			})
 		})
 
 	})
@@ -147,6 +153,7 @@ build:
 	Describe("NewSarkConfigFromFile", func() {
 
 		sark, err := NewSarkConfigFromFile(nil, "../tests/sark/inject_example1.yaml")
+		pwd, _ := os.Getwd()
 
 		Context("Check processing phase", func() {
 			It("Check attributes", func() {
@@ -157,6 +164,10 @@ build:
 		Context("Check filter", func() {
 			It("Check attributes", func() {
 				Expect(sark.Injector.Filter.FilterType).To(Equal("blacklist"))
+			})
+			It("Check id", func() {
+				Expect(sark.Id).To(
+					Equal(path.Clean(path.Join(pwd, "../tests/sark/inject_example1.yaml"))))
 			})
 		})
 

@@ -1,0 +1,24 @@
+injector:
+  filter:
+    type: "blacklist"
+    rules:
+
+      - description: "Rule1 (categories)"
+        categories:
+          - "dev-lang"
+
+      - description: "Rule2 (packages)"
+        packages:
+          - "dev-lang/go"
+          - "sys-devel/gcc"
+
+      - description: "Rule3 (files)"
+        files:
+          - "base-build-staging1.yml"
+
+      - description: "Rule4 (urls)"
+        urls:
+          - "buildfile|https://raw.githubusercontent.com/Sabayon/sbi-tasks/master/next/arm/base/base-build-staging9.yml"
+          - "pkglist|https://dispatcher.sabayon.org/sbi/namespace/core-arm/core-arm/PKGLIST-armv7l"
+
+

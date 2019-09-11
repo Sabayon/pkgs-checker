@@ -1,0 +1,36 @@
+build:
+  equo:
+    dependency_install:
+      enable: 1
+      install_atoms: 1
+    package:
+      unmask:
+        - dev-libs/libbrahe
+        - dev-libs/libg15
+        - dev-libs/libbson
+        - dev-libs/cxxtools
+        - dev-libs/vanessa-logger
+
+  qa_checks: 0
+  emerge:
+    profile: "sabayon-distro:default/linux/arm/17.0/armv7a/sabayon"
+    split_install: 1
+    preserved_rebuild: 1
+    jobs: 3
+    default_args: --accept-properties=-interactive -t --complete-graph --newuse --deep --with-bdeps=y --buildpkg --update
+    features: assume-digests binpkg-logs -userpriv config-protect-if-modified distlocks ebuild-locks fixlafiles merge-sync parallel-fetch preserve-libs protect-owned sandbox sfperms splitdebug strict
+
+  target:
+    - app-crypt/gentoo-keys
+    - app-crypt/openpgp-keys-gentoo-release
+    - dev-util/cmake
+    - sys-libs/cracklib
+    - sys-apps/file
+    - sys-apps/sandbox
+    - app-misc/pax-utils
+    - sys-apps/debianutils
+    - sys-apps/dbus
+    - sys-apps/systemd
+    - net-dns/libidn2
+    - net-libs/gnutls
+    - dev-libs/mpc

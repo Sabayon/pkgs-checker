@@ -33,22 +33,33 @@ func newFilterCommand() *cobra.Command {
 		Short: "Filter bin-host packages/directory.",
 		Args:  cobra.OnlyValidArgs,
 
-		Example: `$> pkgs-checker filter --binhost-dir /usr/portage/packages/ --filter-rules ./rules.yaml`,
+		Example: `$> pkgs-checker filter --binhost-dir /usr/portage/packages/ --sark-config ./rules.yaml`,
 
 		PreRun: func(cmd *cobra.Command, args []string) {
 		},
 
 		Run: func(cmd *cobra.Command, args []string) {
-
 			var err error
 			var filter *commons.Filter
+			var sark *commons.SarkConfig = nil
+
+			// Process SARK config file if defined.
+			if settings.GetString("sark-config") != "" {
+				sark, err = commons.NewSarkConfigFromFile(
+					settings.GetViper(),
+					settings.GetString("sark-config"),
+				)
+				if err != nil {
+					panic(err)
+				}
+			}
 
 			logger.WithFields(logger.Fields{
 				"package": settings.GetStringSlice("package"),
 				"dir":     settings.GetString("binhost-dir"),
 			}).Debugf("[*] Starting analysis...")
 
-			filter, err = commons.NewFilter(settings.GetViper(), logger.StandardLogger(), nil)
+			filter, err = commons.NewFilter(settings.GetViper(), logger.StandardLogger(), sark)
 			if err != nil {
 				panic("Error on create Filter object")
 			}
@@ -62,12 +73,12 @@ func newFilterCommand() *cobra.Command {
 	flags.StringSliceP("package", "p", []string{}, "Filter specific package.")
 	flags.StringSliceP("category", "", []string{}, "Filter specific category.")
 	flags.StringP("binhost-dir", "d", "", "bin-hosts directory where filter packages.")
-	flags.StringP("filter-rules", "f", "", "Configuration file with filter rules.")
+	flags.StringP("sark-config", "f", "", "SARK Configuration file with filter rules or targets.")
 	flags.StringP("filter-type", "t", "", "Define filter type (whitelist|blacklist)")
 
 	settings.BindPFlag("package", flags.Lookup("package"))
 	settings.BindPFlag("binhost-dir", flags.Lookup("binhost-dir"))
-	settings.BindPFlag("filter-rules", flags.Lookup("filter-rules"))
+	settings.BindPFlag("sark-config", flags.Lookup("sark-config"))
 	settings.BindPFlag("filter-type", flags.Lookup("filter-type"))
 
 	return cmd
