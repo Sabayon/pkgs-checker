@@ -51,6 +51,7 @@ type FilterMatrixBranch struct {
 	Category         string
 	CategoryFiltered bool
 	Resources        []*FilterResource
+	Packages         []*GentooPackage
 	Matches          map[string]FilterMatrixLeaf
 	NotMatches       map[string]FilterMatrixLeaf
 }
@@ -58,6 +59,7 @@ type FilterMatrixBranch struct {
 type FilterMatrixLeaf struct {
 	Name     string
 	Path     string
+	Package  *GentooPackage
 	Father   *FilterMatrixBranch
 	Resource *FilterResource
 }
@@ -102,6 +104,21 @@ func (r *FilterResource) AddPackage(pkg string) {
 	r.Packages = append(r.Packages, pkg)
 }
 
+func NewFilterMatrixBranch(category string) (*FilterMatrixBranch, error) {
+	if category == "" {
+		return nil, errors.New("Invalid category param")
+	}
+
+	return &FilterMatrixBranch{
+		Category:         category,
+		CategoryFiltered: false,
+		Resources:        make([]*FilterResource, 0),
+		Packages:         make([]*GentooPackage, 0),
+		Matches:          make(map[string]FilterMatrixLeaf, 0),
+		NotMatches:       make(map[string]FilterMatrixLeaf, 0),
+	}, nil
+}
+
 func NewFilterMatrix(ftype string) (*FilterMatrix, error) {
 	if ftype == "" {
 		return nil, errors.New("Invalid filter type")
@@ -121,6 +138,14 @@ func (m *FilterMatrix) AddResource(r *FilterResource) error {
 	}
 	m.Resources = append(m.Resources, r)
 	return nil
+}
+
+func (m *FilterMatrix) Log(level logger.Level, msg string, args ...interface{}) {
+	if m.Father != nil {
+		m.Father.logger.Logf(level, msg, args...)
+	} else {
+		fmt.Printf("%s: %s", level.String(), fmt.Sprintf(msg, args...))
+	}
 }
 
 func (m *FilterMatrix) GetResourceFilterBySource(source string) (*FilterResource, error) {
@@ -219,7 +244,7 @@ func (m *FilterMatrix) LoadInjectRule(r *FilterResource, rule *SarkFilterRuleCon
 		for _, u := range rule.Urls {
 
 			if r, _ := m.GetResourceFilterBySource(u); r != nil {
-				m.Father.logger.Warnf(fmt.Sprintf("Url %s duplicated.", u))
+				m.Log(logger.WarnLevel, "Url %s duplicated.", u)
 				continue
 			}
 
@@ -275,7 +300,7 @@ func (m *FilterMatrix) LoadInjectRules(source, rtype string, rules []SarkFilterR
 		return errors.New("Error on check for existing resource " + err.Error())
 	}
 	if r != nil {
-		m.Father.logger.Warnf(
+		m.Log(logger.WarnLevel,
 			"Resource %s already loaded. Skip rules to avoid circular injection.",
 			source)
 		return nil
@@ -288,6 +313,58 @@ func (m *FilterMatrix) LoadInjectRules(source, rtype string, rules []SarkFilterR
 		if err != nil {
 			return errors.New("Error on load injection rule: " + err.Error())
 		}
+	}
+
+	return nil
+}
+
+func (m *FilterMatrix) CreateBranches() error {
+	for _, r := range m.Resources {
+		// Check categories
+		for _, category := range r.Categories {
+
+			// Check if exists branch
+			branch, present := m.Branches[category]
+			if present {
+				branch.Resources = append(branch.Resources, r)
+				if !branch.CategoryFiltered {
+					branch.CategoryFiltered = true
+				}
+				m.Log(logger.DebugLevel, "Branch for category %s already present.",
+					category)
+			} else {
+				branch, _ := NewFilterMatrixBranch(category)
+				branch.CategoryFiltered = true
+				m.Branches[category] = *branch
+				m.Log(logger.DebugLevel, "Added branch for category %s.", category)
+			}
+
+		}
+
+		// Check packages
+		for _, pkg := range r.Packages {
+			gp, err := ParsePackageStr(pkg)
+			if err != nil {
+				return errors.New(
+					fmt.Sprintf("Invalid package string %s", pkg))
+			}
+
+			// Check if exists branch
+			branch, present := m.Branches[gp.Category]
+			if present {
+				// TODO: check if is already present
+				// branch.Resources = append(branch.Resources, r)
+				m.Log(logger.DebugLevel, "Add package %s for category %s.",
+					pkg, gp.Category)
+			} else {
+				branch, _ := NewFilterMatrixBranch(gp.Category)
+				m.Branches[gp.Category] = *branch
+				m.Log(logger.DebugLevel, "Added branch for category %s for package %s",
+					pkg, gp.Category)
+			}
+			branch.Packages = append(branch.Packages, gp)
+		}
+
 	}
 
 	return nil

@@ -26,7 +26,9 @@ import (
 	"fmt"
 	"hash"
 	"io"
+	"regexp"
 	"sort"
+	"strings"
 
 	logger "github.com/sirupsen/logrus"
 )
@@ -172,3 +174,113 @@ func (p *Package) CalculateCRC() error {
 func (p PackageSorter) Len() int           { return len(p) }
 func (p PackageSorter) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 func (p PackageSorter) Less(i, j int) bool { return p[i].pkg < p[j].pkg }
+
+// ----------------------------------
+// Code to move and merge inside luet project
+// ----------------------------------
+
+// Package condition
+type PackageCond int
+
+const (
+	PkgCondInvalid = 0
+	// >
+	PkgCondGreater = 1
+	// >=
+	PkgCondGreaterEqual = 2
+	// <
+	PkgCondLess = 3
+	// <=
+	PkgCondLessEqual = 4
+	// =
+	PkgCondEqual = 5
+	// !
+	PkgCondNot = 6
+	// ~
+	PkgCondAnyRevision = 7
+	// =<pkg>*
+	PkgCondMatchVersion = 8
+)
+
+type GentooPackage struct {
+	Name       string
+	Category   string
+	Version    string
+	Slot       string
+	Condition  PackageCond
+	Repository string
+}
+
+func (p *GentooPackage) String() string {
+	// TODO
+	return fmt.Sprintf("%s/%s", p.Category, p.Name)
+}
+
+// return category, package, version, slot, condition
+func ParsePackageStr(pkg string) (*GentooPackage, error) {
+	if pkg == "" {
+		return nil, errors.New("Invalid package string")
+	}
+
+	ans := GentooPackage{
+		Slot:      "0",
+		Condition: PkgCondInvalid,
+	}
+
+	if strings.HasPrefix(pkg, ">=") {
+		pkg = pkg[2:]
+		ans.Condition = PkgCondGreaterEqual
+	} else if strings.HasPrefix(pkg, ">") {
+		pkg = pkg[1:]
+		ans.Condition = PkgCondGreater
+	} else if strings.HasPrefix(pkg, "<=") {
+		pkg = pkg[2:]
+		ans.Condition = PkgCondLessEqual
+	} else if strings.HasPrefix(pkg, "<") {
+		pkg = pkg[1:]
+		ans.Condition = PkgCondLess
+	} else if strings.HasPrefix(pkg, "=") {
+		pkg = pkg[1:]
+		if strings.HasSuffix(pkg, "*") {
+			ans.Condition = PkgCondMatchVersion
+		} else {
+			ans.Condition = PkgCondEqual
+		}
+	} else if strings.HasPrefix(pkg, "~") {
+		pkg = pkg[1:]
+		ans.Condition = PkgCondAnyRevision
+	}
+
+	words := strings.Split(pkg, "/")
+	if len(words) != 2 {
+		return nil, errors.New(fmt.Sprintf("Invalid package string %s", pkg))
+	}
+	ans.Category = words[0]
+	pkgname := words[1]
+
+	// Check if has repository
+	if strings.Contains(pkgname, "::") {
+		words = strings.Split(pkgname, "::")
+		ans.Repository = words[1]
+		pkgname = words[0]
+	}
+
+	// Check if has slot
+	if strings.Contains(pkgname, ":") {
+		words = strings.Split(pkgname, ":")
+		ans.Slot = words[1]
+		pkgname = words[0]
+	}
+
+	regexPkg := regexp.MustCompile(`[0-9]+[-][0-9]+$`)
+	matches := regexPkg.FindAllString(pkgname, -1)
+
+	if len(matches) > 0 {
+		ans.Version = matches[0]
+		ans.Name = pkgname[0 : len(pkgname)-len(ans.Version)]
+	} else {
+		ans.Name = pkgname
+	}
+
+	return &ans, nil
+}
