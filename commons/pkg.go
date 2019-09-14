@@ -203,12 +203,13 @@ const (
 )
 
 type GentooPackage struct {
-	Name       string
-	Category   string
-	Version    string
-	Slot       string
-	Condition  PackageCond
-	Repository string
+	Name          string
+	Category      string
+	Version       string
+	VersionSuffix string
+	Slot          string
+	Condition     PackageCond
+	Repository    string
 }
 
 func (p *GentooPackage) String() string {
@@ -243,6 +244,7 @@ func ParsePackageStr(pkg string) (*GentooPackage, error) {
 		pkg = pkg[1:]
 		if strings.HasSuffix(pkg, "*") {
 			ans.Condition = PkgCondMatchVersion
+			pkg = pkg[0 : len(pkg)-1]
 		} else {
 			ans.Condition = PkgCondEqual
 		}
@@ -272,12 +274,31 @@ func ParsePackageStr(pkg string) (*GentooPackage, error) {
 		pkgname = words[0]
 	}
 
-	regexPkg := regexp.MustCompile(`[0-9]+[-][0-9]+$`)
+	regexPkg := regexp.MustCompile(
+		`([0-9]+[.][0-9]+|[0-9]+|[0-9]+[.][0-9]+[.][0-9]+|[0-9]+[.][0-9]+[.][0.9]+[.][0-9]+)(_p[0-9]+|_pre|_rc[0-9]+|_alpha|_beta)*$`,
+	)
 	matches := regexPkg.FindAllString(pkgname, -1)
 
+	// NOTE: Now suffix comples like _alpha_rc1 are not supported.
+
 	if len(matches) > 0 {
-		ans.Version = matches[0]
-		ans.Name = pkgname[0 : len(pkgname)-len(ans.Version)]
+		// Check if there patch
+		if strings.Contains(matches[0], "_p") {
+			ans.Version = matches[0][:strings.Index(matches[0], "_p")]
+			ans.VersionSuffix = matches[0][strings.Index(matches[0], "_p"):]
+		} else if strings.Contains(matches[0], "_rc") {
+			ans.Version = matches[0][:strings.Index(matches[0], "_rc")]
+			ans.VersionSuffix = matches[0][strings.Index(matches[0], "_rc"):]
+		} else if strings.Contains(matches[0], "_alpha") {
+			ans.Version = matches[0][:strings.Index(matches[0], "_alpha")]
+			ans.VersionSuffix = matches[0][strings.Index(matches[0], "_alpha"):]
+		} else if strings.Contains(matches[0], "_beta") {
+			ans.Version = matches[0][:strings.Index(matches[0], "_beta")]
+			ans.VersionSuffix = matches[0][strings.Index(matches[0], "_beta"):]
+		} else {
+			ans.Version = matches[0]
+		}
+		ans.Name = pkgname[0 : len(pkgname)-len(ans.Version)-1-len(ans.VersionSuffix)]
 	} else {
 		ans.Name = pkgname
 	}
