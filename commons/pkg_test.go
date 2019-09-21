@@ -21,11 +21,14 @@ package commons_test
 
 import (
 	"fmt"
+	"sort"
 
 	. "github.com/Sabayon/pkgs-checker/commons"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	version "github.com/hashicorp/go-version"
 )
 
 var _ = Describe("Gentoo Packages", func() {
@@ -522,6 +525,78 @@ var _ = Describe("Gentoo Packages", func() {
 			})
 		})
 
+		Context("Matches version with 4 numbers", func() {
+
+			pkg, err := ParsePackageStr("x11-libs/gtk+-2.1.0.1")
+			g := GentooPackage{
+				Name:       "gtk+",
+				Category:   "x11-libs",
+				Condition:  PkgCondEqual,
+				Version:    "2.1.0.1",
+				Slot:       "0",
+				Repository: "",
+			}
+			fmt.Println(fmt.Sprintf("pkg %s", pkg))
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check pkgName", func() {
+				Expect((*pkg).Name).Should(Equal("gtk+"))
+			})
+
+			It("Check category", func() {
+				Expect((*pkg).Category).Should(Equal("x11-libs"))
+			})
+
+			It("Check cond", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg).Condition).Should(Equal(g.Condition))
+			})
+
+			It("Check struct", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg)).Should(Equal(g))
+			})
+		})
+
+		Context("Matches version with 4 numbers (2)", func() {
+
+			pkg, err := ParsePackageStr("x11-libs/gtk+-2.0.1.0")
+			g := GentooPackage{
+				Name:       "gtk+",
+				Category:   "x11-libs",
+				Condition:  PkgCondEqual,
+				Version:    "2.0.1.0",
+				Slot:       "0",
+				Repository: "",
+			}
+			fmt.Println(fmt.Sprintf("pkg %s", pkg))
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check pkgName", func() {
+				Expect((*pkg).Name).Should(Equal("gtk+"))
+			})
+
+			It("Check category", func() {
+				Expect((*pkg).Category).Should(Equal("x11-libs"))
+			})
+
+			It("Check cond", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg).Condition).Should(Equal(g.Condition))
+			})
+
+			It("Check struct", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg)).Should(Equal(g))
+			})
+		})
+
 		Context("Matches version with 4 numbers on version and release candidate", func() {
 
 			pkg, err := ParsePackageStr("=dev-db/oracle-instantclient-sqlplus-12.1.0.2_rc1")
@@ -633,5 +708,422 @@ var _ = Describe("Gentoo Packages", func() {
 			})
 		})
 
+		Context("Check Admit() example1", func() {
+
+			pkgA, err := ParsePackageStr("x11-libs/gtk+")
+			pkgB, err := ParsePackageStr("x11-libs/gtk+-3.0.1")
+			admitted, err := pkgA.Admit(pkgB)
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check Admit", func() {
+				Expect(admitted).Should(Equal(true))
+			})
+
+		})
+
+		Context("Check Admit() example2", func() {
+			var pkgA, pkgB *GentooPackage
+			var err error
+			pkgA, err = ParsePackageStr("x11-libs/gtk+")
+			pkgB, err = ParsePackageStr("www-servers/apache")
+			_, err = pkgA.Admit(pkgB)
+
+			It("Check error", func() {
+				Expect(err).ShouldNot(BeNil())
+			})
+
+		})
+
+		Context("Check Admit() example3", func() {
+			var pkgA, pkgB *GentooPackage
+			var err error
+
+			pkgA, err = ParsePackageStr("x11-libs/gtk+")
+			pkgB, err = ParsePackageStr("x11-libs/libX11")
+			_, err = pkgA.Admit(pkgB)
+
+			It("Check error", func() {
+				Expect(err).ShouldNot(BeNil())
+			})
+
+		})
+
+		Context("Check Admit() example4", func() {
+
+			pkgA, err := ParsePackageStr("=x11-libs/gtk+-3.0.1")
+			pkgB, err := ParsePackageStr("x11-libs/gtk+-3.0.1")
+			admitted, err := pkgA.Admit(pkgB)
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check Admit", func() {
+				Expect(admitted).Should(Equal(true))
+			})
+
+		})
+
+		Context("Check Admit() example5", func() {
+
+			pkgA, err := ParsePackageStr("x11-libs/gtk+-3.0.1")
+			pkgB, err := ParsePackageStr("x11-libs/gtk+-3.0.1")
+			admitted, err := pkgA.Admit(pkgB)
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check Admit", func() {
+				Expect(admitted).Should(Equal(true))
+			})
+
+		})
+
+		Context("Check Admit() example6", func() {
+
+			pkgA, err := ParsePackageStr(">=x11-libs/gtk+-3.0.1")
+			pkgB, err := ParsePackageStr("x11-libs/gtk+-3.0.1")
+			admitted, err := pkgA.Admit(pkgB)
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check Admit", func() {
+				Expect(admitted).Should(Equal(true))
+			})
+
+		})
+
+		Context("Check Admit() example7", func() {
+
+			pkgA, err := ParsePackageStr(">x11-libs/gtk+-3.0.1")
+			pkgB, err := ParsePackageStr("x11-libs/gtk+-3.0.1")
+			admitted, err := pkgA.Admit(pkgB)
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check Admit", func() {
+				Expect(admitted).Should(Equal(false))
+			})
+
+		})
+
+		Context("Check Admit() example8", func() {
+
+			pkgA, err := ParsePackageStr(">x11-libs/gtk+-3.0.1")
+			pkgB, err := ParsePackageStr("x11-libs/gtk+-3.0.2")
+			admitted, err := pkgA.Admit(pkgB)
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check Admit", func() {
+				Expect(admitted).Should(Equal(true))
+			})
+
+		})
+
+		Context("Check Admit() example9", func() {
+
+			pkgA, err := ParsePackageStr(">x11-libs/gtk+-3.0.1")
+			pkgB, err := ParsePackageStr("x11-libs/gtk+-3.1.0")
+			admitted, err := pkgA.Admit(pkgB)
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check Admit", func() {
+				Expect(admitted).Should(Equal(true))
+			})
+
+		})
+
+		Context("Check Admit() example10", func() {
+
+			pkgA, err := ParsePackageStr(">x11-libs/gtk+-3.0.1")
+			pkgB, err := ParsePackageStr("x11-libs/gtk+")
+			admitted, err := pkgA.Admit(pkgB)
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check Admit", func() {
+				Expect(admitted).Should(Equal(false))
+			})
+
+		})
+
+		Context("Check Admit() example11", func() {
+
+			pkgA, err := ParsePackageStr("x11-libs/gtk+")
+			pkgB, err := ParsePackageStr("x11-libs/gtk+-1.3.4")
+			admitted, err := pkgA.Admit(pkgB)
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check Admit", func() {
+				Expect(admitted).Should(Equal(true))
+			})
+
+		})
+
+		Context("Check Admit() example12", func() {
+
+			pkgA, err := ParsePackageStr("<x11-libs/gtk+-2.0.0")
+			pkgB, err := ParsePackageStr("x11-libs/gtk+")
+			admitted, err := pkgA.Admit(pkgB)
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check Admit", func() {
+				Expect(admitted).Should(Equal(false))
+			})
+
+		})
+
+		Context("Check Admit() example13", func() {
+
+			pkgA, err := ParsePackageStr("<x11-libs/gtk+-2.0.0")
+			pkgB, err := ParsePackageStr("x11-libs/gtk+-1.0.0")
+			admitted, err := pkgA.Admit(pkgB)
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check Admit", func() {
+				Expect(admitted).Should(Equal(true))
+			})
+
+		})
+
+		Context("Check Admit() example14", func() {
+
+			pkgA, err := ParsePackageStr("<x11-libs/gtk+-2.0.0")
+			pkgB, err := ParsePackageStr("x11-libs/gtk+-1.0.0")
+			admitted, err := pkgA.Admit(pkgB)
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check Admit", func() {
+				Expect(admitted).Should(Equal(true))
+			})
+
+		})
+
+		Context("Check Admit() example15", func() {
+
+			pkgA, err := ParsePackageStr("<=x11-libs/gtk+-2.0.0")
+			pkgB, err := ParsePackageStr("x11-libs/gtk+-1.0.0")
+			admitted, err := pkgA.Admit(pkgB)
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check Admit", func() {
+				Expect(admitted).Should(Equal(true))
+			})
+
+		})
+
+		Context("Check Admit() example16", func() {
+
+			pkgA, err := ParsePackageStr("!x11-libs/gtk+-2.0.0")
+			pkgB, err := ParsePackageStr("x11-libs/gtk+-1.0.0")
+			admitted, err := pkgA.Admit(pkgB)
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check Admit", func() {
+				Expect(admitted).Should(Equal(true))
+			})
+
+		})
+
+		Context("Check Admit() example17", func() {
+
+			pkgA, err := ParsePackageStr("!x11-libs/gtk+-2.0.0")
+			pkgB, err := ParsePackageStr("x11-libs/gtk+-2.0.0")
+			admitted, err := pkgA.Admit(pkgB)
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check Admit", func() {
+				Expect(admitted).Should(Equal(false))
+			})
+
+		})
+
+		Context("Check Admit() example18", func() {
+
+			pkgA, err := ParsePackageStr("~x11-libs/gtk+-2.0")
+			pkgB, err := ParsePackageStr("x11-libs/gtk+-2.0_rc1")
+			admitted, err := pkgA.Admit(pkgB)
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check Admit", func() {
+				Expect(admitted).Should(Equal(true))
+			})
+
+		})
+
+		Context("Check Admit() example19", func() {
+
+			pkgA, err := ParsePackageStr("~x11-libs/gtk+-2.0")
+			pkgB, err := ParsePackageStr("x11-libs/gtk+-2.0.1")
+			admitted, err := pkgA.Admit(pkgB)
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check Admit", func() {
+				Expect(admitted).Should(Equal(false))
+			})
+
+		})
+
+		Context("Check Admit() example20", func() {
+
+			pkgA, err := ParsePackageStr("=x11-libs/gtk+-2.0*")
+			pkgB, err := ParsePackageStr("x11-libs/gtk+-2.0.1")
+			admitted, err := pkgA.Admit(pkgB)
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check Admit", func() {
+				Expect(admitted).Should(Equal(true))
+			})
+
+		})
+
+		Context("Check Admit() example21", func() {
+
+			pkgA, err := ParsePackageStr("=x11-libs/gtk+-2.0.1*")
+			pkgB, err := ParsePackageStr("x11-libs/gtk+-2.0.1.0")
+			admitted, err := pkgA.Admit(pkgB)
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check Admit", func() {
+				Expect(admitted).Should(Equal(true))
+			})
+
+		})
+
+		Context("Check Admit() example22", func() {
+
+			pkgA, err := ParsePackageStr("=x11-libs/gtk+-2.0.1*")
+			pkgB, err := ParsePackageStr("x11-libs/gtk+-2.0.1-r1")
+			admitted, err := pkgA.Admit(pkgB)
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check Admit", func() {
+				Expect(admitted).Should(Equal(true))
+			})
+
+		})
+		Context("Test go-version - example1", func() {
+			v1, err := version.NewVersion("1.1.1.1")
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+			fmt.Println("VERSION = ", v1)
+		})
+
+		Context("Test go-version - example2", func() {
+			v1, err := version.NewVersion("1.1.1.1")
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+			v2, err := version.NewVersion("1.1.1.2")
+			It("Check error V2", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			res := v1.LessThan(v2)
+			It("Check result", func() {
+				Expect(res).Should(Equal(true))
+			})
+
+			res = v2.GreaterThanOrEqual(v1)
+			It("Check result2", func() {
+				Expect(res).Should(Equal(true))
+			})
+		})
+
+		Context("Test go-version - example3", func() {
+			v1, err := version.NewVersion("1.1.2_rc1")
+			// NOTE: err SHOLD be with a value instead is null
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+			v2, err := version.NewVersion("1.1.1.2-alpha")
+			It("Check error V2", func() {
+				Expect(err).Should(BeNil())
+			})
+			fmt.Println("V1 = ", v1, err)
+			fmt.Println("V2 = ", v2, err)
+
+		})
+
+		Context("Test go-version - example4", func() {
+			v1, err := version.NewVersion("1.1.2-rc1")
+			// NOTE: err SHOLD be with a value instead is null
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+			v2, err := version.NewVersion("1.1.1.2")
+			It("Check error V2", func() {
+				Expect(err).Should(BeNil())
+			})
+			v3, err := version.NewVersion("1.1.2")
+			It("Check error V3", func() {
+				Expect(err).Should(BeNil())
+			})
+			fmt.Println("V1 = ", v1, err)
+			fmt.Println("V2 = ", v2, err)
+			fmt.Println("V3 = ", v3, err)
+			versions := make([]*version.Version, 3)
+			versions[0] = v1
+			versions[1] = v2
+			versions[2] = v3
+			sort.Sort(version.Collection(versions))
+			fmt.Println("SORT = ", versions)
+
+		})
+
 	})
+
 })

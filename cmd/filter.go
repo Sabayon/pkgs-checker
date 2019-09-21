@@ -75,11 +75,16 @@ func newFilterCommand() *cobra.Command {
 	flags.StringP("binhost-dir", "d", "", "bin-hosts directory where filter packages.")
 	flags.StringP("sark-config", "f", "", "SARK Configuration file with filter rules or targets.")
 	flags.StringP("filter-type", "t", "", "Define filter type (whitelist|blacklist)")
+	flags.StringP("report-prefix-path", "r", "",
+		"Report file prefix to use for both filtered and unfiltered packages...")
+	flags.Bool("dry-run", false, "Only check file to remove.")
 
+	settings.BindPFlag("dry-run", flags.Lookup("dry-run"))
 	settings.BindPFlag("package", flags.Lookup("package"))
 	settings.BindPFlag("binhost-dir", flags.Lookup("binhost-dir"))
 	settings.BindPFlag("sark-config", flags.Lookup("sark-config"))
 	settings.BindPFlag("filter-type", flags.Lookup("filter-type"))
+	settings.BindPFlag("report-prefix-path", flags.Lookup("report-prefix-path"))
 
 	return cmd
 }

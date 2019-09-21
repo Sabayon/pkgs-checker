@@ -30,6 +30,7 @@ import (
 	"sort"
 	"strings"
 
+	version "github.com/hashicorp/go-version"
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -214,7 +215,112 @@ type GentooPackage struct {
 
 func (p *GentooPackage) String() string {
 	// TODO
-	return fmt.Sprintf("%s/%s", p.Category, p.Name)
+	opt := ""
+	if p.Version != "" {
+		opt = "-"
+	}
+	return fmt.Sprintf("%s/%s%s%s%s",
+		p.Category, p.Name, opt,
+		p.Version, p.VersionSuffix)
+}
+
+func sanitizeVersion(v string) string {
+	// https://devmanual.gentoo.org/ebuild-writing/file-format/index.html
+	ans := strings.ReplaceAll(v, "_alpha", "-alpha")
+	ans = strings.ReplaceAll(ans, "_beta", "-beta")
+	ans = strings.ReplaceAll(ans, "_pre", "-pre")
+	ans = strings.ReplaceAll(ans, "_rc", "-rc")
+	ans = strings.ReplaceAll(ans, "_p", "-p")
+
+	return ans
+}
+
+func (p *GentooPackage) Admit(i *GentooPackage) (bool, error) {
+	var ans bool = false
+	var v1 *version.Version = nil
+	var v2 *version.Version = nil
+	var err error
+
+	if p.Category != i.Category {
+		return false, errors.New(
+			fmt.Sprintf("Wrong category for package %s", i.Name))
+	}
+
+	if p.Name != i.Name {
+		return false, errors.New(
+			fmt.Sprintf("Wrong name for package %s", i.Name))
+	}
+
+	if p.Version != "" {
+		v1, err = version.NewVersion(sanitizeVersion(p.Version))
+		if err != nil {
+			return false, err
+		}
+	}
+	if i.Version != "" {
+		v2, err = version.NewVersion(sanitizeVersion(i.Version))
+		if err != nil {
+			return false, err
+		}
+	}
+
+	// If package doesn't define version admit all versions of the package.
+	if p.Version == "" {
+		ans = true
+	} else {
+		if p.Condition == PkgCondInvalid || p.Condition == PkgCondEqual {
+			// case 1: source-pkg-1.0 and dest-pkg-1.0 or dest-pkg without version
+			if i.Version != "" && i.Version == p.Version {
+				ans = true
+			}
+		} else if p.Condition == PkgCondAnyRevision {
+			if v1 != nil && v2 != nil {
+				ans = v1.Equal(v2)
+			}
+		} else if p.Condition == PkgCondMatchVersion {
+			// TODO: case of 7.3* where 7.30 is accepted.
+			if v1 != nil && v2 != nil {
+				segments := v1.Segments()
+				n := strings.Count(p.Version, ".")
+				switch n {
+				case 0:
+					segments[0]++
+				case 1:
+					segments[1]++
+				case 2:
+					segments[2]++
+				default:
+					segments[len(segments)-1]++
+				}
+				nextVersion := strings.Trim(strings.Replace(fmt.Sprint(segments), " ", ".", -1), "[]")
+				constraints, err := version.NewConstraint(
+					fmt.Sprintf(">= %s, < %s", p.Version, nextVersion),
+				)
+				if err != nil {
+					return false, err
+				}
+				ans = constraints.Check(v2)
+			}
+		} else if v1 != nil && v2 != nil {
+
+			switch p.Condition {
+			case PkgCondGreaterEqual:
+				ans = v2.GreaterThanOrEqual(v1)
+			case PkgCondLessEqual:
+				ans = v2.LessThanOrEqual(v1)
+			case PkgCondGreater:
+				ans = v2.GreaterThan(v1)
+			case PkgCondLess:
+				ans = v2.LessThan(v1)
+			case PkgCondNot:
+				ans = !v2.Equal(v1)
+			}
+
+		}
+
+	}
+
+	return ans, nil
 }
 
 // return category, package, version, slot, condition
@@ -251,6 +357,9 @@ func ParsePackageStr(pkg string) (*GentooPackage, error) {
 	} else if strings.HasPrefix(pkg, "~") {
 		pkg = pkg[1:]
 		ans.Condition = PkgCondAnyRevision
+	} else if strings.HasPrefix(pkg, "!") {
+		pkg = pkg[1:]
+		ans.Condition = PkgCondNot
 	}
 
 	words := strings.Split(pkg, "/")
@@ -275,7 +384,26 @@ func ParsePackageStr(pkg string) (*GentooPackage, error) {
 	}
 
 	regexPkg := regexp.MustCompile(
-		`([0-9]+[.][0-9]+|[0-9]+|[0-9]+[.][0-9]+[.][0-9]+|[0-9]+[.][0-9]+[.][0.9]+[.][0-9]+)(_p[0-9]+|_pre|_rc[0-9]+|_alpha|_beta)*$`,
+		fmt.Sprintf("[-](%s|%s|%s|%s|%s)((%s|%s|%s|%s|%s|%s)+)*$",
+			// Version regex
+			// 1.1
+			"[0-9]+[.][0-9]+",
+			// 1
+			"[0-9]+",
+			// 1.1.1
+			"[0-9]+[.][0-9]+[.][0-9]+",
+			// 1.1.1.1
+			"[0-9]+[.][0-9]+[.][0-9]+[.][0-9]+",
+			// 1.1.1.1.1
+			"[0-9]+[.][0-9]+[.][0-9]+[.][0-9]+[.][0-9]+",
+			// suffix
+			"-r[0-9]+",
+			"_p[0-9]+",
+			"_pre",
+			"_rc[0-9]+",
+			"_alpha",
+			"_beta",
+		),
 	)
 	matches := regexPkg.FindAllString(pkgname, -1)
 
@@ -284,23 +412,31 @@ func ParsePackageStr(pkg string) (*GentooPackage, error) {
 	if len(matches) > 0 {
 		// Check if there patch
 		if strings.Contains(matches[0], "_p") {
-			ans.Version = matches[0][:strings.Index(matches[0], "_p")]
+			ans.Version = matches[0][1:strings.Index(matches[0], "_p")]
 			ans.VersionSuffix = matches[0][strings.Index(matches[0], "_p"):]
 		} else if strings.Contains(matches[0], "_rc") {
-			ans.Version = matches[0][:strings.Index(matches[0], "_rc")]
+			ans.Version = matches[0][1:strings.Index(matches[0], "_rc")]
 			ans.VersionSuffix = matches[0][strings.Index(matches[0], "_rc"):]
 		} else if strings.Contains(matches[0], "_alpha") {
-			ans.Version = matches[0][:strings.Index(matches[0], "_alpha")]
+			ans.Version = matches[0][1:strings.Index(matches[0], "_alpha")]
 			ans.VersionSuffix = matches[0][strings.Index(matches[0], "_alpha"):]
 		} else if strings.Contains(matches[0], "_beta") {
-			ans.Version = matches[0][:strings.Index(matches[0], "_beta")]
+			ans.Version = matches[0][1:strings.Index(matches[0], "_beta")]
 			ans.VersionSuffix = matches[0][strings.Index(matches[0], "_beta"):]
+		} else if strings.Contains(matches[0], "-r") {
+			ans.Version = matches[0][1:strings.Index(matches[0], "-r")]
+			ans.VersionSuffix = matches[0][strings.Index(matches[0], "-r"):]
 		} else {
-			ans.Version = matches[0]
+			ans.Version = matches[0][1:]
 		}
 		ans.Name = pkgname[0 : len(pkgname)-len(ans.Version)-1-len(ans.VersionSuffix)]
 	} else {
 		ans.Name = pkgname
+	}
+
+	// Set condition if there isn't a prefix but only a version
+	if ans.Condition == PkgCondInvalid && ans.Version != "" {
+		ans.Condition = PkgCondEqual
 	}
 
 	return &ans, nil

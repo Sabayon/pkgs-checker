@@ -370,6 +370,36 @@ func (m *FilterMatrix) CreateBranches() error {
 	return nil
 }
 
+func (m *FilterMatrix) GetMatches() []*FilterMatrixLeaf {
+	ans := make([]*FilterMatrixLeaf, 0)
+
+	for _, branch := range m.Branches {
+		for _, match := range branch.Matches {
+			ans = append(ans, &match)
+		}
+	}
+
+	return ans
+}
+
+func (m *FilterMatrix) GetNotMatches() []*FilterMatrixLeaf {
+	ans := make([]*FilterMatrixLeaf, 0)
+
+	for _, branch := range m.Branches {
+		for _, notMatch := range branch.NotMatches {
+			ans = append(ans, &notMatch)
+		}
+	}
+
+	return ans
+}
+
+func (m *FilterMatrix) CheckMatches(binhost map[string][]string) error {
+	//
+
+	return nil
+}
+
 func NewFilter(settings *viper.Viper, l *logger.Logger, config *SarkConfig) (*Filter, error) {
 	var log *logger.Logger = nil
 	if settings == nil {
@@ -456,9 +486,60 @@ func (f *Filter) Run(binhostDir string) error {
 	if len(f.BinHostTree) > 0 {
 		// Phase2: Create FilterMatrix
 		err = f.createFilterMatrix()
+		if err != nil {
+			return err
+		}
 
 	} else {
 		f.logger.Infof("No files found to filter. Nothing to do.")
+	}
+
+	// Elaborate matches/not matches
+	err = f.RulesTree.CheckMatches(f.BinHostTree)
+	if err != nil {
+		return err
+	}
+
+	matches := f.RulesTree.GetMatches()
+	// TODO: write matches files.
+
+	notMatches := f.RulesTree.GetNotMatches()
+	// TODO: write not matches files
+
+	// Remove filtered files
+	if !f.settings.GetBool("dry-run") {
+		if f.RulesTree.FilterType == "whitelist" {
+			// POST: Remove Not matched
+			err = f.unlinkFiles(notMatches)
+		} else {
+			// POST: Remove matches with blacklist
+			err = f.unlinkFiles(matches)
+		}
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (f *Filter) unlinkFiles(files []*FilterMatrixLeaf) error {
+	var inError = false
+	for _, l := range files {
+		f.logger.Infof("Removing file %s...", l.Path)
+		err := os.Remove(l.Path)
+		if err != nil {
+			f.logger.Errorf("Error on remove file %s: %s",
+				l.Path, err)
+			inError = true
+		}
+	}
+
+	if inError {
+		return errors.New("Error on removing files")
+	} else {
+		f.logger.Infof("Removed %d files.", len(files))
 	}
 
 	return nil
@@ -499,6 +580,10 @@ func (f *Filter) createFilterMatrix() error {
 	}
 
 	// Elaborate loaded data
+	err := f.RulesTree.CreateBranches()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
