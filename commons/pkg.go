@@ -270,7 +270,7 @@ func (p *GentooPackage) Admit(i *GentooPackage) (bool, error) {
 	} else {
 		if p.Condition == PkgCondInvalid || p.Condition == PkgCondEqual {
 			// case 1: source-pkg-1.0 and dest-pkg-1.0 or dest-pkg without version
-			if i.Version != "" && i.Version == p.Version {
+			if i.Version != "" && i.Version == p.Version && p.VersionSuffix == i.VersionSuffix {
 				ans = true
 			}
 		} else if p.Condition == PkgCondAnyRevision {

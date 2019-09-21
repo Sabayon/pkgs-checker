@@ -1054,6 +1054,23 @@ var _ = Describe("Gentoo Packages", func() {
 			})
 
 		})
+
+		Context("Check Admit() example23", func() {
+
+			pkgA, err := ParsePackageStr("=x11-libs/gtk+-2.0.1")
+			pkgB, err := ParsePackageStr("x11-libs/gtk+-2.0.1-r1")
+			admitted, err := pkgA.Admit(pkgB)
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check Admit", func() {
+				Expect(admitted).Should(Equal(false))
+			})
+
+		})
+
 		Context("Test go-version - example1", func() {
 			v1, err := version.NewVersion("1.1.1.1")
 			It("Check error", func() {
