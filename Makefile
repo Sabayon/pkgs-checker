@@ -21,11 +21,7 @@ clean:
 	-rm pkgs-checker
 	-rm -rf release/
 
-.PHONY: multiarch-build-dev
-multiarch-build-dev: dep
-	gox $(BUILD_PLATFORMS) -output="release/$(NAME)-$(REVISION)-{{.OS}}-{{.Arch}}" -ldflags "-extldflags=-Wl,--allow-multiple-definition"
-
-.PHONY: dep
+.PHONY: deps
 deps:
 	go env
 	# Installing dependencies...
@@ -36,5 +32,6 @@ deps:
 	go get -u github.com/maxbrunsfeld/counterfeiter
 	go get -u github.com/onsi/gomega/...
 
-
-
+.PHONY: multiarch-build-dev
+multiarch-build-dev: deps
+	gox $(BUILD_PLATFORMS) -output="release/$(NAME)-$(REVISION)-{{.OS}}-{{.Arch}}" -ldflags "-extldflags=-Wl,--allow-multiple-definition"
