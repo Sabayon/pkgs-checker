@@ -513,12 +513,36 @@ func (m *FilterMatrix) GetMatches() []*FilterMatrixLeaf {
 	return ans
 }
 
+func (m *FilterMatrix) GetMatchesFiles() []string {
+	ans := make([]string, 0)
+
+	for _, branch := range m.Branches {
+		for _, match := range branch.Matches {
+			ans = append(ans, (*match).Path)
+		}
+	}
+
+	return ans
+}
+
 func (m *FilterMatrix) GetNotMatches() []*FilterMatrixLeaf {
 	ans := make([]*FilterMatrixLeaf, 0)
 
 	for _, branch := range m.Branches {
 		for _, notMatch := range branch.NotMatches {
 			ans = append(ans, notMatch)
+		}
+	}
+
+	return ans
+}
+
+func (m *FilterMatrix) GetNotMatchesFiles() []string {
+	ans := make([]string, 0)
+
+	for _, branch := range m.Branches {
+		for _, notMatch := range branch.NotMatches {
+			ans = append(ans, (*notMatch).Path)
 		}
 	}
 
@@ -673,11 +697,23 @@ func (f *Filter) Run(binhostDir string) error {
 
 	matches := f.RulesTree.GetMatches()
 	f.logger.Infof("Matches packages found %d.", len(matches))
-	// TODO: write matches files.
 
 	notMatches := f.RulesTree.GetNotMatches()
 	f.logger.Infof("Not matches packages found %d.", len(notMatches))
-	// TODO: write not matches files
+
+	// Write report
+	if f.settings.GetString("report-prefix-path") != "" {
+		report, err := NewFilterReport(f.RulesTree.FilterType)
+		if err != nil {
+			return err
+		}
+		report.Matches = f.RulesTree.GetMatchesFiles()
+		report.NotMatches = f.RulesTree.GetNotMatchesFiles()
+		err = report.WriteReport(f.settings.GetString("report-prefix-path"))
+		if err != nil {
+			return err
+		}
+	}
 
 	// Remove filtered files
 	if !f.settings.GetBool("dry-run") {
