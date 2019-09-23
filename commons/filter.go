@@ -25,8 +25,10 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	logger "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -43,17 +45,20 @@ type Filter struct {
 type FilterMatrix struct {
 	FilterType string
 	Father     *Filter
-	Branches   map[string]FilterMatrixBranch
+	Branches   map[string]*FilterMatrixBranch
 	Resources  []*FilterResource
 }
 
 type FilterMatrixBranch struct {
 	Category         string
 	CategoryFiltered bool
+	Matrix           *FilterMatrix
 	Resources        []*FilterResource
 	Packages         []*GentooPackage
-	Matches          map[string]FilterMatrixLeaf
-	NotMatches       map[string]FilterMatrixLeaf
+	// The key of the map contains file path
+	Matches map[string]*FilterMatrixLeaf
+	// The key of the map contains file path
+	NotMatches map[string]*FilterMatrixLeaf
 }
 
 type FilterMatrixLeaf struct {
@@ -114,9 +119,128 @@ func NewFilterMatrixBranch(category string) (*FilterMatrixBranch, error) {
 		CategoryFiltered: false,
 		Resources:        make([]*FilterResource, 0),
 		Packages:         make([]*GentooPackage, 0),
-		Matches:          make(map[string]FilterMatrixLeaf, 0),
-		NotMatches:       make(map[string]FilterMatrixLeaf, 0),
+		Matches:          make(map[string]*FilterMatrixLeaf, 0),
+		NotMatches:       make(map[string]*FilterMatrixLeaf, 0),
 	}, nil
+}
+
+func (b *FilterMatrixBranch) ContainsResource(resource *FilterResource) (bool, error) {
+	var ans bool = false
+	if resource == nil {
+		return false, errors.New(
+			fmt.Sprintf("Invalid resource for branch %s", b.Category))
+	}
+
+	for _, r := range b.Resources {
+		if r == resource {
+			ans = true
+			break
+		}
+	}
+
+	return ans, nil
+}
+
+func (b *FilterMatrixBranch) CheckPackages(files []string) error {
+	var admitted bool
+	var hasPkgRule bool
+
+	for _, f := range files {
+		admitted = false
+		hasPkgRule = false
+
+		pkgname := filepath.Base(f)
+		pkgname = pkgname[:strings.Index(pkgname, filepath.Ext(pkgname))]
+
+		gentooPkg, err := ParsePackageStr(
+			fmt.Sprintf("%s/%s", b.Category, pkgname))
+		if err != nil {
+			return err
+		}
+
+		// TODO: replace packages with a map
+		for _, pkg := range b.Packages {
+			if pkg.Name == gentooPkg.Name {
+				hasPkgRule = true
+				admitted, err = pkg.Admit(gentooPkg)
+				if err != nil {
+					return err
+				}
+
+				if !admitted {
+					break
+				}
+			}
+		}
+
+		if !admitted && b.CategoryFiltered && !hasPkgRule {
+			admitted = true
+		}
+
+		// TODO: store FilterResource
+		_, err = b.AddPackage(f, admitted)
+		if err != nil {
+			return err
+		}
+
+	}
+
+	return nil
+}
+
+func (b *FilterMatrixBranch) AddResource(resource *FilterResource) error {
+	var present bool = false
+
+	if resource == nil {
+		return errors.New(
+			fmt.Sprintf("Invalid resource to add in branch %s",
+				b.Category))
+	}
+
+	// TODO: check if convert list of resources in map
+	// Check resource is already present
+	for _, r := range b.Resources {
+		if r == resource {
+			present = true
+			break
+		}
+	}
+
+	if !present {
+		b.Resources = append(b.Resources, resource)
+	}
+
+	return nil
+}
+
+func (b *FilterMatrixBranch) AddPackage(file string, match bool) (*FilterMatrixLeaf, error) {
+	pkgname := filepath.Base(file)
+	pkgname = pkgname[:strings.Index(pkgname, filepath.Ext(pkgname))]
+
+	gentooPkg, err := ParsePackageStr(
+		fmt.Sprintf("%s/%s", b.Category, pkgname))
+	if err != nil {
+		return nil, err
+	}
+
+	leaf := &FilterMatrixLeaf{
+		Name:    gentooPkg.Name,
+		Path:    file,
+		Package: gentooPkg,
+		Father:  b,
+	}
+
+	if match {
+		b.Matches[file] = leaf
+		b.Matrix.Log(logger.DebugLevel, "Branch %s: Add matched package %s (%s)",
+			b.Category, gentooPkg, leaf.Path)
+	} else {
+		b.NotMatches[file] = leaf
+		b.Matrix.Log(logger.DebugLevel, "Branch %s: Add not matched package %s (%s)",
+			b.Category, gentooPkg, leaf.Path)
+	}
+
+	return leaf, nil
 }
 
 func NewFilterMatrix(ftype string) (*FilterMatrix, error) {
@@ -126,6 +250,7 @@ func NewFilterMatrix(ftype string) (*FilterMatrix, error) {
 	return &FilterMatrix{
 		FilterType: ftype,
 		Resources:  make([]*FilterResource, 0),
+		Branches:   make(map[string]*FilterMatrixBranch, 0),
 	}, nil
 }
 
@@ -144,7 +269,7 @@ func (m *FilterMatrix) Log(level logger.Level, msg string, args ...interface{}) 
 	if m.Father != nil {
 		m.Father.logger.Logf(level, msg, args...)
 	} else {
-		fmt.Printf("%s: %s", level.String(), fmt.Sprintf(msg, args...))
+		fmt.Printf("%s: %s\n", level.String(), fmt.Sprintf(msg, args...))
 	}
 }
 
@@ -326,7 +451,6 @@ func (m *FilterMatrix) CreateBranches() error {
 			// Check if exists branch
 			branch, present := m.Branches[category]
 			if present {
-				branch.Resources = append(branch.Resources, r)
 				if !branch.CategoryFiltered {
 					branch.CategoryFiltered = true
 				}
@@ -335,10 +459,12 @@ func (m *FilterMatrix) CreateBranches() error {
 			} else {
 				branch, _ := NewFilterMatrixBranch(category)
 				branch.CategoryFiltered = true
-				m.Branches[category] = *branch
+				branch.Matrix = m
+				branch.Resources = make([]*FilterResource, 0)
+				m.Branches[category] = branch
 				m.Log(logger.DebugLevel, "Added branch for category %s.", category)
 			}
-
+			branch.AddResource(r)
 		}
 
 		// Check packages
@@ -352,17 +478,22 @@ func (m *FilterMatrix) CreateBranches() error {
 			// Check if exists branch
 			branch, present := m.Branches[gp.Category]
 			if present {
-				// TODO: check if is already present
-				// branch.Resources = append(branch.Resources, r)
 				m.Log(logger.DebugLevel, "Add package %s for category %s.",
 					pkg, gp.Category)
 			} else {
-				branch, _ := NewFilterMatrixBranch(gp.Category)
-				m.Branches[gp.Category] = *branch
-				m.Log(logger.DebugLevel, "Added branch for category %s for package %s",
-					pkg, gp.Category)
+				branch, err = NewFilterMatrixBranch(gp.Category)
+				if err != nil {
+					return errors.New(
+						fmt.Sprintf("Error on create FilterMatrixBranch for category %s",
+							gp.Category))
+				}
+				branch.Matrix = m
+				m.Branches[gp.Category] = branch
+				m.Log(logger.DebugLevel, "Added branch for category %s for package %s.",
+					gp.Category, pkg)
 			}
 			branch.Packages = append(branch.Packages, gp)
+			branch.AddResource(r)
 		}
 
 	}
@@ -375,7 +506,7 @@ func (m *FilterMatrix) GetMatches() []*FilterMatrixLeaf {
 
 	for _, branch := range m.Branches {
 		for _, match := range branch.Matches {
-			ans = append(ans, &match)
+			ans = append(ans, match)
 		}
 	}
 
@@ -387,7 +518,7 @@ func (m *FilterMatrix) GetNotMatches() []*FilterMatrixLeaf {
 
 	for _, branch := range m.Branches {
 		for _, notMatch := range branch.NotMatches {
-			ans = append(ans, &notMatch)
+			ans = append(ans, notMatch)
 		}
 	}
 
@@ -395,7 +526,34 @@ func (m *FilterMatrix) GetNotMatches() []*FilterMatrixLeaf {
 }
 
 func (m *FilterMatrix) CheckMatches(binhost map[string][]string) error {
-	//
+	for category, pkgs := range binhost {
+
+		m.Log(logger.DebugLevel,
+			"FilterMatrix/CheckMatches: Analyze category %s", category)
+		if branch, ok := m.Branches[category]; ok {
+			// POST: exists a branch for the category
+			err := branch.CheckPackages(pkgs)
+			if err != nil {
+				return err
+			}
+
+		} else {
+			// POST: doesn't exist a branch for the category
+			branch, err := NewFilterMatrixBranch(category)
+			if err != nil {
+				return err
+			}
+			branch.Matrix = m
+			for _, pkg := range pkgs {
+				_, err := branch.AddPackage(pkg, false)
+				if err != nil {
+					return err
+				}
+			}
+			m.Branches[category] = branch
+		}
+
+	}
 
 	return nil
 }
@@ -477,33 +635,48 @@ func (f *Filter) Run(binhostDir string) error {
 		return errors.New("Invalid binhost directory")
 	}
 
+	start := time.Now()
 	// Phase1: Analyze binhost Directory
 	err = f.analyzeBinHostDirectory(binhostDir)
 	if err != nil {
 		return err
 	}
+	f.logger.Infoln(
+		fmt.Sprintf("Analyze of binhost directory elapsed in %d µs.",
+			time.Now().Sub(start).Nanoseconds()/1e3))
 
 	if len(f.BinHostTree) > 0 {
+		start = time.Now()
 		// Phase2: Create FilterMatrix
-		err = f.createFilterMatrix()
+		err = f.CreateFilterMatrix()
 		if err != nil {
 			return err
 		}
+		f.logger.Infoln(
+			fmt.Sprintf("Creation of filter matrix elapsed in %d µs.",
+				time.Now().Sub(start).Nanoseconds()/1e3))
 
 	} else {
 		f.logger.Infof("No files found to filter. Nothing to do.")
+		return nil
 	}
 
+	start = time.Now()
 	// Elaborate matches/not matches
 	err = f.RulesTree.CheckMatches(f.BinHostTree)
 	if err != nil {
 		return err
 	}
+	f.logger.Infoln(
+		fmt.Sprintf("Check matches elapsed in %d µs.",
+			time.Now().Sub(start).Nanoseconds()/1e3))
 
 	matches := f.RulesTree.GetMatches()
+	f.logger.Infof("Matches packages found %d.", len(matches))
 	// TODO: write matches files.
 
 	notMatches := f.RulesTree.GetNotMatches()
+	f.logger.Infof("Not matches packages found %d.", len(notMatches))
 	// TODO: write not matches files
 
 	// Remove filtered files
@@ -545,7 +718,7 @@ func (f *Filter) unlinkFiles(files []*FilterMatrixLeaf) error {
 	return nil
 }
 
-func (f *Filter) createFilterMatrix() error {
+func (f *Filter) CreateFilterMatrix() error {
 	if f.Config == nil {
 		// Create an empty Sark Config where injection filter
 		// has blacklist as filter type and no packages blocked

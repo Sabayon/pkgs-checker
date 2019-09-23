@@ -57,7 +57,7 @@ func newFilterCommand() *cobra.Command {
 			logger.WithFields(logger.Fields{
 				"package": settings.GetStringSlice("package"),
 				"dir":     settings.GetString("binhost-dir"),
-			}).Debugf("[*] Starting analysis...")
+			}).Infof("[*] Starting analysis...")
 
 			filter, err = commons.NewFilter(settings.GetViper(), logger.StandardLogger(), sark)
 			if err != nil {
@@ -65,6 +65,12 @@ func newFilterCommand() *cobra.Command {
 			}
 
 			err = filter.Run(settings.GetString("binhost-dir"))
+			commons.CheckErr(err)
+
+			logger.WithFields(logger.Fields{
+				"package": settings.GetStringSlice("package"),
+				"dir":     settings.GetString("binhost-dir"),
+			}).Infof("[*] Filter analysis completed.")
 		},
 	}
 

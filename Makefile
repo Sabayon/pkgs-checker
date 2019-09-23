@@ -9,6 +9,7 @@ pkgs-checker:
 .PHONY: test
 test:
 	go test -v -tags all -cover -race ./...
+	#go test -v -tags all -cover -race ./... -ginkgo.v
 
 clean:
 	-rm pkgs-checker
