@@ -22,7 +22,19 @@ clean:
 	-rm -rf release/
 
 .PHONY: multiarch-build-dev
-multiarch-build-dev:
+multiarch-build-dev: dep
 	gox $(BUILD_PLATFORMS) -output="release/$(NAME)-$(REVISION)-{{.OS}}-{{.Arch}}" -ldflags "-extldflags=-Wl,--allow-multiple-definition"
+
+.PHONY: dep
+deps:
+	go env
+	# Installing dependencies...
+	go get golang.org/x/lint/golint
+	go get github.com/mitchellh/gox
+	go get golang.org/x/tools/cmd/cover
+	go get -u github.com/onsi/ginkgo/ginkgo
+	go get -u github.com/maxbrunsfeld/counterfeiter
+	go get -u github.com/onsi/gomega/...
+
 
 
