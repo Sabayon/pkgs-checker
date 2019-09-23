@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  branch = "master"
+  digest = "1:b95ea500e429d9396656302d21a893843c745aa3e31358a2f6b721acfc976a0b"
+  name = "github.com/MottainaiCI/simplestreams-builder"
+  packages = ["pkg/tools"]
+  pruneopts = "UT"
+  revision = "efb382161f5673941c540410d89189d54d14dbc7"
+
+[[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
   name = "github.com/fsnotify/fsnotify"
   packages = ["."]
@@ -285,6 +293,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/MottainaiCI/simplestreams-builder/pkg/tools",
     "github.com/go-yaml/yaml",
     "github.com/hashicorp/go-version",
     "github.com/onsi/ginkgo",
