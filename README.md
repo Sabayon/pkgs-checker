@@ -29,19 +29,54 @@ Use " [command] --help" for more information about a command.
 
 ```
 
-### *hash* command
+## *filter* command
 
-#### Why
+*filter* sub-command permits to filter packages that must be excluded to injection phase of a specific repository.
+
+### Usage
+
+```bash
+pkgs-checker filter --help
+Filter bin-host packages/directory.
+
+Usage:
+   filter [OPTIONS] [flags]
+
+Examples:
+$> pkgs-checker filter --binhost-dir /usr/portage/packages/ --sark-config ./rules.yaml
+
+Flags:
+  -d, --binhost-dir string          bin-hosts directory where filter packages.
+      --category strings            Filter specific category.
+      --dry-run                     Only check file to remove.
+  -t, --filter-type string          Define filter type (whitelist|blacklist)
+  -h, --help                        help for filter
+  -p, --package strings             Filter specific package.
+  -r, --report-prefix-path string   Report file prefix to use for both filtered and unfiltered packages...
+  -f, --sark-config string          SARK Configuration file with filter rules or targets.
+
+Global Flags:
+  -c, --concurrency       Enable concurrency process.
+  -l, --logfile string    Logfile Path. Optional.
+  -L, --loglevel string   Set logging level.
+                          [DEBUG, INFO, WARN, ERROR] (default "INFO")
+  -v, --verbose           Enable verbose logging on stdout.
+
+```
+
+## *hash* command
+
+### Why
 
 Artefacts created with emerge could be compressed with tar+bz2 not in ordered way and some files must be skipped to avoid injection of some packages that are equal.
 
-#### How
+### How
 
 *pkgs-checker* processes tarball file and create an MD5 checksum for any file inside package that are not be skipped (by command line options). At EOF create a new MD5 with all MD5 checksum bytes plus list of directories found sorted.
 
 Normally, files to skip are .pyc,.pyo,.mo that contains timestamp data that generate false events for package injection.
 
-#### Usage
+### Usage
 
 Hereinafter, all available options:
 
@@ -78,7 +113,7 @@ Global Flags:
 
 ```
 
-## Task for Next Release:
+### Task for Next Release:
 
   * Add support to stdin processing
 
