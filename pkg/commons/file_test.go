@@ -23,7 +23,7 @@ import (
 	"os"
 	"path"
 
-	. "github.com/Sabayon/pkgs-checker/commons"
+	. "github.com/Sabayon/pkgs-checker/pkg/commons"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

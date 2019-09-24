@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
-package commons
+package pkglist
 
 import (
 	"bufio"
@@ -30,6 +30,8 @@ import (
 	"strings"
 
 	logger "github.com/sirupsen/logrus"
+
+	"github.com/Sabayon/pkgs-checker/pkg/binhostdir"
 )
 
 func PkgListParser(data []byte) ([]string, error) {
@@ -60,7 +62,7 @@ func PkgListCreate(binhostDir string, log *logger.Logger) ([]string, error) {
 
 	binHostTree := make(map[string][]string, 0)
 
-	err := AnalyzeBinHostDirectory(binhostDir, log, &binHostTree)
+	err := binhostdir.AnalyzeBinHostDirectory(binhostDir, log, &binHostTree)
 	if err != nil {
 		return ans, err
 	}

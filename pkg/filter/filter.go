@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-package commons
+package filter
 
 import (
 	"errors"
@@ -29,12 +29,18 @@ import (
 
 	logger "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+
+	binhostdir "github.com/Sabayon/pkgs-checker/pkg/binhostdir"
+	commons "github.com/Sabayon/pkgs-checker/pkg/commons"
+	gentoo "github.com/Sabayon/pkgs-checker/pkg/gentoo"
+	pkglist "github.com/Sabayon/pkgs-checker/pkg/pkglist"
+	sark "github.com/Sabayon/pkgs-checker/pkg/sark"
 )
 
 type Filter struct {
 	settings    *viper.Viper
 	logger      *logger.Logger
-	Config      *SarkConfig
+	Config      *sark.SarkConfig
 	BinHostTree map[string][]string
 	RulesTree   *FilterMatrix
 }
@@ -51,7 +57,7 @@ type FilterMatrixBranch struct {
 	CategoryFiltered bool
 	Matrix           *FilterMatrix
 	Resources        []*FilterResource
-	Packages         []*GentooPackage
+	Packages         []*gentoo.GentooPackage
 	// The key of the map contains file path
 	Matches map[string]*FilterMatrixLeaf
 	// The key of the map contains file path
@@ -61,7 +67,7 @@ type FilterMatrixBranch struct {
 type FilterMatrixLeaf struct {
 	Name     string
 	Path     string
-	Package  *GentooPackage
+	Package  *gentoo.GentooPackage
 	Father   *FilterMatrixBranch
 	Resource *FilterResource
 }
@@ -115,7 +121,7 @@ func NewFilterMatrixBranch(category string) (*FilterMatrixBranch, error) {
 		Category:         category,
 		CategoryFiltered: false,
 		Resources:        make([]*FilterResource, 0),
-		Packages:         make([]*GentooPackage, 0),
+		Packages:         make([]*gentoo.GentooPackage, 0),
 		Matches:          make(map[string]*FilterMatrixLeaf, 0),
 		NotMatches:       make(map[string]*FilterMatrixLeaf, 0),
 	}, nil
@@ -149,7 +155,7 @@ func (b *FilterMatrixBranch) CheckPackages(files []string) error {
 		pkgname := filepath.Base(f)
 		pkgname = pkgname[:strings.Index(pkgname, filepath.Ext(pkgname))]
 
-		gentooPkg, err := ParsePackageStr(
+		gentooPkg, err := gentoo.ParsePackageStr(
 			fmt.Sprintf("%s/%s", b.Category, pkgname))
 		if err != nil {
 			return err
@@ -214,7 +220,7 @@ func (b *FilterMatrixBranch) AddPackage(file string, match bool) (*FilterMatrixL
 	pkgname := filepath.Base(file)
 	pkgname = pkgname[:strings.Index(pkgname, filepath.Ext(pkgname))]
 
-	gentooPkg, err := ParsePackageStr(
+	gentooPkg, err := gentoo.ParsePackageStr(
 		fmt.Sprintf("%s/%s", b.Category, pkgname))
 	if err != nil {
 		return nil, err
@@ -282,7 +288,7 @@ func (m *FilterMatrix) GetResourceFilterBySource(source string) (*FilterResource
 	return nil, nil
 }
 
-func (m *FilterMatrix) processSarkBuildFile(conf *SarkConfig, level int, fromFile bool) error {
+func (m *FilterMatrix) processSarkBuildFile(conf *sark.SarkConfig, level int, fromFile bool) error {
 	if conf != nil {
 		if r, _ := m.GetResourceFilterBySource(conf.Id); r == nil {
 			if len(conf.Build.TargetPkgs) > 0 {
@@ -306,7 +312,7 @@ func (m *FilterMatrix) processSarkBuildFile(conf *SarkConfig, level int, fromFil
 	return nil
 }
 
-func (m *FilterMatrix) LoadInjectRule(r *FilterResource, rule *SarkFilterRuleConf, level int) error {
+func (m *FilterMatrix) LoadInjectRule(r *FilterResource, rule *sark.SarkFilterRuleConf, level int) error {
 	if r == nil {
 		return errors.New("LoadInjectRule: Invalid FilterResource")
 	}
@@ -334,13 +340,13 @@ func (m *FilterMatrix) LoadInjectRule(r *FilterResource, rule *SarkFilterRuleCon
 	// Handle Files Rules
 	if len(rule.Files) > 0 {
 		for _, f := range rule.Files {
-			absfile, err := AbsPathFromBase(filepath.Dir((*r).Source), f)
+			absfile, err := commons.AbsPathFromBase(filepath.Dir((*r).Source), f)
 			if err != nil {
 				return errors.New(
 					fmt.Sprintf("LoadInjectRule: Error on retrieve abs path for file %s: %s",
 						f, err.Error()))
 			}
-			conf, err := NewSarkConfigFromFile(m.Father.settings, absfile)
+			conf, err := sark.NewSarkConfigFromFile(m.Father.settings, absfile)
 			if err != nil {
 				return errors.New(
 					fmt.Sprintf("LoadInjectRule: Error on load file %s: %s",
@@ -358,7 +364,7 @@ func (m *FilterMatrix) LoadInjectRule(r *FilterResource, rule *SarkFilterRuleCon
 
 	// Handle URL
 	if len(rule.Urls) > 0 {
-		opts := NewHttpClientDefaultOpts()
+		opts := commons.NewHttpClientDefaultOpts()
 		if m.Father.settings.GetBool("insecure_skipverify") {
 			opts.InsecureSkipVerify = true
 		}
@@ -377,13 +383,13 @@ func (m *FilterMatrix) LoadInjectRule(r *FilterResource, rule *SarkFilterRuleCon
 			}
 
 			if strings.HasPrefix(u, "buildfile|") {
-				resp, err := GetResource(u[10:], apiKey, opts)
+				resp, err := commons.GetResource(u[10:], apiKey, opts)
 				if err != nil {
 					return errors.New(fmt.Sprintf("Error on fetch url %s: %s", u, err))
 				}
 
-				var remoteBuildfile *SarkConfig
-				remoteBuildfile, err = NewSarkConfigFromBytes(m.Father.settings, resp)
+				var remoteBuildfile *sark.SarkConfig
+				remoteBuildfile, err = sark.NewSarkConfigFromBytes(m.Father.settings, resp)
 				if err != nil {
 					return errors.New(
 						fmt.Sprintf("LoadInjectRule: Error on parse data from url %s: %s",
@@ -393,14 +399,14 @@ func (m *FilterMatrix) LoadInjectRule(r *FilterResource, rule *SarkFilterRuleCon
 				err = m.processSarkBuildFile(remoteBuildfile, level, false)
 
 			} else {
-				resp, err := GetResource(u[9:], apiKey, opts)
+				resp, err := commons.GetResource(u[9:], apiKey, opts)
 				if err != nil {
 					return errors.New(
 						fmt.Sprintf("Error on fetch url %s: %s", u, err))
 				}
 
 				var pkgs []string
-				pkgs, err = PkgListParser(resp)
+				pkgs, err = pkglist.PkgListParser(resp)
 				if len(pkgs) > 0 {
 					br, _ := NewFilterResource(u, "pkglist", pkgs, nil)
 					m.AddResource(br)
@@ -414,7 +420,7 @@ func (m *FilterMatrix) LoadInjectRule(r *FilterResource, rule *SarkFilterRuleCon
 	return nil
 }
 
-func (m *FilterMatrix) LoadInjectRules(source, rtype string, rules []SarkFilterRuleConf) error {
+func (m *FilterMatrix) LoadInjectRules(source, rtype string, rules []sark.SarkFilterRuleConf) error {
 	// NOTE: currently is not supported the inclusion of remote injection rules.
 
 	r, err := m.GetResourceFilterBySource(source)
@@ -466,7 +472,7 @@ func (m *FilterMatrix) CreateBranches() error {
 
 		// Check packages
 		for _, pkg := range r.Packages {
-			gp, err := ParsePackageStr(pkg)
+			gp, err := gentoo.ParsePackageStr(pkg)
 			if err != nil {
 				return errors.New(
 					fmt.Sprintf("Invalid package string %s", pkg))
@@ -579,7 +585,7 @@ func (m *FilterMatrix) CheckMatches(binhost map[string][]string) error {
 	return nil
 }
 
-func NewFilter(settings *viper.Viper, l *logger.Logger, config *SarkConfig) (*Filter, error) {
+func NewFilter(settings *viper.Viper, l *logger.Logger, config *sark.SarkConfig) (*Filter, error) {
 	var log *logger.Logger = nil
 	if settings == nil {
 		return nil, errors.New("Invalid settings param")
@@ -612,7 +618,7 @@ func (f *Filter) Run(binhostDir string) error {
 
 	start := time.Now()
 	// Phase1: Analyze binhost Directory
-	err = AnalyzeBinHostDirectory(binhostDir, f.logger, &f.BinHostTree)
+	err = binhostdir.AnalyzeBinHostDirectory(binhostDir, f.logger, &f.BinHostTree)
 	if err != nil {
 		return err
 	}
@@ -709,12 +715,12 @@ func (f *Filter) CreateFilterMatrix() error {
 	if f.Config == nil {
 		// Create an empty Sark Config where injection filter
 		// has blacklist as filter type and no packages blocked
-		f.Config, _ = NewSarkConfig(f.settings, "blacklist")
+		f.Config, _ = sark.NewSarkConfig(f.settings, "blacklist")
 		f.Config.Id = "filter"
 	} else if f.Config.Injector.Filter.FilterType == "" {
 		// If there is a filter section I consider filter of type
 		// whitelist where packages are all present on target section.
-		f.Config.Injector = *NewSarkInjectConfig("whitelist")
+		f.Config.Injector = *sark.NewSarkInjectConfig("whitelist")
 		f.Config.Id = "filter"
 	}
 

@@ -17,12 +17,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-package commons_test
+package pkglist_test
 
 import (
 	"fmt"
 
-	. "github.com/Sabayon/pkgs-checker/commons"
+	. "github.com/Sabayon/pkgs-checker/pkg/pkglist"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

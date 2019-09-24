@@ -17,13 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-package commons_test
+package gentoo_test
 
 import (
 	"fmt"
 	"sort"
 
-	. "github.com/Sabayon/pkgs-checker/commons"
+	. "github.com/Sabayon/pkgs-checker/pkg/gentoo"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

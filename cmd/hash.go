@@ -27,6 +27,7 @@ import (
 	settings "github.com/spf13/viper"
 
 	"github.com/Sabayon/pkgs-checker/pkg/commons"
+	"github.com/Sabayon/pkgs-checker/pkg/hash"
 )
 
 func newHashCommand() *cobra.Command {
@@ -52,7 +53,7 @@ $> pkgs-checker hash -e .pyc -e .pyo -e .mo -e .bz2 --directory /usr/portage/pac
 		Run: func(cmd *cobra.Command, args []string) {
 
 			var err error
-			var checker commons.CheckerExecutor
+			var checker hash.CheckerExecutor
 
 			logger.WithFields(logger.Fields{
 				"package": settings.GetStringSlice("package"),
@@ -62,9 +63,9 @@ $> pkgs-checker hash -e .pyc -e .pyo -e .mo -e .bz2 --directory /usr/portage/pac
 
 			if settings.GetBool("concurrency") == true {
 				commons.InitConcurrency()
-				checker, err = commons.NewCheckerConcurrent(settings.GetViper(), logger.StandardLogger())
+				checker, err = hash.NewCheckerConcurrent(settings.GetViper(), logger.StandardLogger())
 			} else {
-				checker, err = commons.NewChecker(settings.GetViper(), logger.StandardLogger())
+				checker, err = hash.NewChecker(settings.GetViper(), logger.StandardLogger())
 			}
 			if err != nil {
 				panic("Error on create Checker object")
@@ -114,7 +115,7 @@ Default output on stdout with format: HASH <CHECKSUM> <PACKAGE>`)
 	return cmd
 }
 
-func writeHashfile(checker commons.CheckerExecutor) {
+func writeHashfile(checker hash.CheckerExecutor) {
 	var err error
 	var hashfile *os.File
 

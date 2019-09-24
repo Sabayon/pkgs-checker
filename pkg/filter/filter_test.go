@@ -17,12 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-package commons_test
+package filter_test
 
 import (
 	"fmt"
 
-	. "github.com/Sabayon/pkgs-checker/commons"
+	. "github.com/Sabayon/pkgs-checker/pkg/filter"
+	gentoo "github.com/Sabayon/pkgs-checker/pkg/gentoo"
+	sark "github.com/Sabayon/pkgs-checker/pkg/sark"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -32,7 +34,7 @@ var _ = Describe("FilterRule", func() {
 
 	Describe("NewSarkFilterRuleConf", func() {
 
-		f := NewSarkFilterRuleConf("test")
+		f := sark.NewSarkFilterRuleConf("test")
 		f.AddPackage("net-misc/ntp")
 		f.AddCategory("net-misc")
 		f.AddFile("pkglist|/tmp/Pkglist")
@@ -154,11 +156,11 @@ var _ = Describe("FilterRule", func() {
 				))
 
 				Expect(*(*(matrix.GetNotMatches()[0])).Package).Should(Equal(
-					GentooPackage{
+					gentoo.GentooPackage{
 						Name:      "nodejs",
 						Category:  "net-libs",
 						Version:   "9.11.1",
-						Condition: PkgCondEqual,
+						Condition: gentoo.PkgCondEqual,
 						Slot:      "0",
 					},
 				))

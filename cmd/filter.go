@@ -24,6 +24,8 @@ import (
 	settings "github.com/spf13/viper"
 
 	"github.com/Sabayon/pkgs-checker/pkg/commons"
+	f "github.com/Sabayon/pkgs-checker/pkg/filter"
+	"github.com/Sabayon/pkgs-checker/pkg/sark"
 )
 
 func newFilterCommand() *cobra.Command {
@@ -40,12 +42,12 @@ func newFilterCommand() *cobra.Command {
 
 		Run: func(cmd *cobra.Command, args []string) {
 			var err error
-			var filter *commons.Filter
-			var sark *commons.SarkConfig = nil
+			var filter *f.Filter
+			var conf *sark.SarkConfig = nil
 
 			// Process SARK config file if defined.
 			if settings.GetString("sark-config") != "" {
-				sark, err = commons.NewSarkConfigFromFile(
+				conf, err = sark.NewSarkConfigFromFile(
 					settings.GetViper(),
 					settings.GetString("sark-config"),
 				)
@@ -59,7 +61,8 @@ func newFilterCommand() *cobra.Command {
 				"dir":     settings.GetString("binhost-dir"),
 			}).Infof("[*] Starting analysis...")
 
-			filter, err = commons.NewFilter(settings.GetViper(), logger.StandardLogger(), sark)
+			filter, err = f.NewFilter(settings.GetViper(),
+				logger.StandardLogger(), conf)
 			if err != nil {
 				panic("Error on create Filter object")
 			}

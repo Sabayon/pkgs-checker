@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-package commons
+package hash
 
 import (
 	"archive/tar"
@@ -26,7 +26,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"hash"
+	h "hash"
 	"io"
 	"io/ioutil"
 	"os"
@@ -37,6 +37,8 @@ import (
 
 	logger "github.com/sirupsen/logrus"
 	viper "github.com/spf13/viper"
+
+	commons "github.com/Sabayon/pkgs-checker/pkg/commons"
 )
 
 type CheckerExecutor interface {
@@ -228,9 +230,9 @@ func (c *Checker) processTarBz2(pkg string, abs string) error {
 	}
 
 	err = p.CalculateCRC()
-	if strings.Compare(p.checksum, PKGS_CHECKER_EMPTY_PKGHASH) == 0 &&
+	if strings.Compare(p.checksum, commons.PKGS_CHECKER_EMPTY_PKGHASH) == 0 &&
 		c.settings.GetBool("hash-empty") {
-		var fake_hash hash.Hash = md5.New()
+		var fake_hash h.Hash = md5.New()
 		var h []byte = fake_hash.Sum(nil)
 		p.checksum = hex.EncodeToString(h)
 	}
@@ -407,7 +409,10 @@ func (c *Checker) Run() error {
 func (c *CheckerConcurrent) processPackages(pkgs []string) error {
 	var err error
 	var i int
-	var ch chan ChannelResp = make(chan ChannelResp, c.settings.GetInt("maxconcurrency"))
+	var ch chan commons.ChannelResp = make(
+		chan commons.ChannelResp,
+		c.settings.GetInt("maxconcurrency"),
+	)
 	var okCounter, n_pkgs int
 
 	okCounter = 0
@@ -443,12 +448,12 @@ func (c *CheckerConcurrent) processPackages(pkgs []string) error {
 	return err
 }
 
-func (c *CheckerConcurrent) go2ProcessPackage(channel chan ChannelResp,
+func (c *CheckerConcurrent) go2ProcessPackage(channel chan commons.ChannelResp,
 	pkg string) {
 	var err error
 	c.logger.Debugf("[%s] Starting goroutine", pkg)
 	err = c.processPackage(pkg)
-	channel <- NewChannelResp(pkg, err)
+	channel <- commons.NewChannelResp(pkg, err)
 	c.logger.Debugf("[%s] End goroutine", pkg)
 }
 

@@ -27,6 +27,7 @@ import (
 	settings "github.com/spf13/viper"
 
 	"github.com/Sabayon/pkgs-checker/pkg/commons"
+	"github.com/Sabayon/pkgs-checker/pkg/pkglist"
 )
 
 func newPkglistCreateCommand() *cobra.Command {
@@ -45,16 +46,16 @@ func newPkglistCreateCommand() *cobra.Command {
 
 			binHostDir := settings.GetString("pkglist-binhost-dir")
 
-			pkgs, err := commons.PkgListCreate(binHostDir, logger.StandardLogger())
+			pkgs, err := pkglist.PkgListCreate(binHostDir, logger.StandardLogger())
 			if err != nil {
 				fmt.Errorf("Error: %s\n", string(err.Error()))
 				os.Exit(1)
 			}
 
 			if settings.GetString("pkglist-file") != "" {
-				err = commons.PkgListWriteFile(pkgs, settings.GetString("pkglist-file"))
+				err = pkglist.PkgListWriteFile(pkgs, settings.GetString("pkglist-file"))
 			} else {
-				err = commons.PkgListWrite(pkgs, os.Stdout)
+				err = pkglist.PkgListWrite(pkgs, os.Stdout)
 			}
 			commons.CheckErr(err)
 		},

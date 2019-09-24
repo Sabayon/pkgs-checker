@@ -17,14 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-package commons_test
+package sark_test
 
 import (
 	"fmt"
 	"os"
 	"path"
 
-	. "github.com/Sabayon/pkgs-checker/commons"
+	. "github.com/Sabayon/pkgs-checker/pkg/sark"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -152,7 +152,7 @@ build:
 
 	Describe("NewSarkConfigFromFile", func() {
 
-		sark, err := NewSarkConfigFromFile(nil, "../tests/sark/inject_example1.yaml")
+		sark, err := NewSarkConfigFromFile(nil, "../../tests/sark/inject_example1.yaml")
 		pwd, _ := os.Getwd()
 
 		Context("Check processing phase", func() {
@@ -167,7 +167,7 @@ build:
 			})
 			It("Check id", func() {
 				Expect(sark.Id).To(
-					Equal(path.Clean(path.Join(pwd, "../tests/sark/inject_example1.yaml"))))
+					Equal(path.Clean(path.Join(pwd, "../../tests/sark/inject_example1.yaml"))))
 			})
 		})
 
