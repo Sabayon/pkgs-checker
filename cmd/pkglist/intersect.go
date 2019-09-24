@@ -72,7 +72,7 @@ func newPkglistIntersectCommand() *cobra.Command {
 
 				list1, err = pkglist.PkgListLoadResource(r1, apiKey, opts)
 				if err != nil {
-					fmt.Fprintln(os.Stderr, "Error on load resource %s", r1)
+					fmt.Fprintf(os.Stderr, "Error on load resource %s\n", r1)
 					os.Exit(1)
 				}
 				pkglist_data[r1] = list1
@@ -85,7 +85,7 @@ func newPkglistIntersectCommand() *cobra.Command {
 					if list2, ok = pkglist_data[r2]; !ok {
 						list2, err = pkglist.PkgListLoadResource(r2, apiKey, opts)
 						if err != nil {
-							fmt.Fprintln(os.Stderr, "Error on load resource %s", r2)
+							fmt.Fprintf(os.Stderr, "Error on load resource %s\n", r2)
 							os.Exit(1)
 						}
 						pkglist_data[r2] = list2
@@ -93,7 +93,7 @@ func newPkglistIntersectCommand() *cobra.Command {
 
 					intersect, err := pkglist.PkgListIntersectFromLists(list1, list2)
 					if err != nil {
-						fmt.Fprintln(os.Stderr, "Error on compare %s with %s", r1, r2)
+						fmt.Fprintf(os.Stderr, "Error on compare %s with %s\n", r1, r2)
 						os.Exit(1)
 					}
 
