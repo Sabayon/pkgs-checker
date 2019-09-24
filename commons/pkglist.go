@@ -19,9 +19,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package commons
 
 import (
+	"bufio"
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
+	"os"
+	"path/filepath"
+	"sort"
 	"strings"
+
+	logger "github.com/sirupsen/logrus"
 )
 
 func PkgListParser(data []byte) ([]string, error) {
@@ -40,4 +48,70 @@ func PkgListParser(data []byte) ([]string, error) {
 	}
 
 	return ans, nil
+}
+
+func PkgListCreate(binhostDir string, log *logger.Logger) ([]string, error) {
+	// TODO: handle logger outside
+	ans := make([]string, 0)
+
+	if binhostDir == "" {
+		return ans, errors.New("Invalid binhostDir")
+	}
+
+	binHostTree := make(map[string][]string, 0)
+
+	err := AnalyzeBinHostDirectory(binhostDir, log, &binHostTree)
+	if err != nil {
+		return ans, err
+	}
+
+	if len(binHostTree) > 0 {
+		keys := make([]string, 0)
+		for k, _ := range binHostTree {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
+		for _, cat := range keys {
+			pkgs := binHostTree[cat]
+			sort.Strings(pkgs)
+
+			for _, p := range pkgs {
+				f := filepath.Base(p)
+				ans = append(ans,
+					fmt.Sprintf("%s/%s",
+						cat, f[0:strings.Index(f, filepath.Ext(f))]))
+			}
+		}
+	}
+
+	return ans, nil
+}
+
+func PkgListWriteFile(pkgs []string, f string) error {
+	file, err := os.OpenFile(f, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	w := bufio.NewWriter(file)
+	err = PkgListWrite(pkgs, w)
+	if err != nil {
+		return err
+	}
+	w.Flush()
+
+	return nil
+}
+
+func PkgListWrite(pkgs []string, out io.Writer) error {
+	for _, p := range pkgs {
+		_, err := io.WriteString(out, fmt.Sprintf("%s\n", p))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
