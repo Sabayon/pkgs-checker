@@ -27,6 +27,7 @@ import (
 	settings "github.com/spf13/viper"
 
 	"github.com/Sabayon/pkgs-checker/cmd/pkglist"
+	"github.com/Sabayon/pkgs-checker/cmd/sark"
 	"github.com/Sabayon/pkgs-checker/pkg/commons"
 )
 
@@ -61,6 +62,7 @@ func init() {
 		newHashCommand(),
 		newFilterCommand(),
 		pkglist.NewPkglistCommand(),
+		sark.NewSarkCommand(),
 	)
 }
 
