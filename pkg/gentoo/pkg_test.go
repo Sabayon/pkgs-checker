@@ -1151,6 +1151,40 @@ var _ = Describe("Gentoo Packages", func() {
 				Expect(gp.GetPackageName()).Should(Equal("sys-base/gcc"))
 			})
 		})
+
+		Context("GetPackageName2", func() {
+			gp, err := ParsePackageStr("app-arch/rpm2targz-9.0.0.5g")
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check package name", func() {
+				Expect(gp.GetPackageName()).Should(Equal("app-arch/rpm2targz"))
+			})
+
+			It("Check package version", func() {
+				Expect(gp.Version).Should(Equal("9.0.0.5g"))
+			})
+		})
+
+		Context("GetPackageName3", func() {
+			gp, err := ParsePackageStr("dev-lang/spidermonkey-52.9.1_pre1")
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check package name", func() {
+				Expect(gp.GetPackageName()).Should(Equal("dev-lang/spidermonkey"))
+			})
+
+			It("Check package version", func() {
+				Expect(gp.Version).Should(Equal("52.9.1"))
+			})
+
+			It("Check package version suffix", func() {
+				Expect(gp.VersionSuffix).Should(Equal("_pre1"))
+			})
+		})
 	})
 
 })
