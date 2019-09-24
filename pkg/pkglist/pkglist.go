@@ -105,6 +105,11 @@ func PkgListIntersect(list1Map, list2Map map[string][]gentoo.GentooPackage) []st
 				for _, pkg2 := range pkgs2 {
 					if pkg.OfPackage(&pkg2) {
 						mpkgs[pkg.GetPackageName()] = true
+						logger.Debugf("pkg %s (%s) duplicated.",
+							pkg.GetPackageName(), pkg2.GetPackageName())
+					} else {
+						logger.Debugf("pkg %s - %s - not present",
+							pkg.GetPackageName(), pkg2.GetPackageName())
 					}
 				}
 			}
