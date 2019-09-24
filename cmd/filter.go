@@ -23,7 +23,7 @@ import (
 	"github.com/spf13/cobra"
 	settings "github.com/spf13/viper"
 
-	"github.com/Sabayon/pkgs-checker/commons"
+	"github.com/Sabayon/pkgs-checker/pkg/commons"
 )
 
 func newFilterCommand() *cobra.Command {
