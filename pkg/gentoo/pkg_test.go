@@ -1141,6 +1141,16 @@ var _ = Describe("Gentoo Packages", func() {
 
 		})
 
+		Context("GetPackageName", func() {
+			gp, err := ParsePackageStr("sys-base/gcc-8.2.0")
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check package name", func() {
+				Expect(gp.GetPackageName()).Should(Equal("sys-base/gcc"))
+			})
+		})
 	})
 
 })

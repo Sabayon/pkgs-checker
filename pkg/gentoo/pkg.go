@@ -86,6 +86,20 @@ func sanitizeVersion(v string) string {
 	return ans
 }
 
+func (p *GentooPackage) OfPackage(i *GentooPackage) (ans bool) {
+	if p.Category == i.Category && p.Name == i.Name {
+		ans = true
+	} else {
+		ans = false
+	}
+	return
+}
+
+func (p *GentooPackage) GetPackageName() (ans string) {
+	ans = fmt.Sprintf("%s/%s", p.Category, p.Name)
+	return
+}
+
 func (p *GentooPackage) Admit(i *GentooPackage) (bool, error) {
 	var ans bool = false
 	var v1 *version.Version = nil
