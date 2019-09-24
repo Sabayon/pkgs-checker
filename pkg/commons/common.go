@@ -94,3 +94,14 @@ func CheckErr(err error) {
 		panic(err)
 	}
 }
+
+func SanitizeDuplicate(i []string) (o []string) {
+	m := make(map[string]bool)
+	for _, s := range i {
+		m[s] = true
+	}
+	for k, _ := range m {
+		o = append(o, k)
+	}
+	return
+}
