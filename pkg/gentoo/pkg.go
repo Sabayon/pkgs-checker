@@ -252,9 +252,9 @@ func ParsePackageStr(pkg string) (*GentooPackage, error) {
 		fmt.Sprintf("[-](%s|%s|%s|%s|%s)((%s|%s|%s|%s|%s|%s)+)*$",
 			// Version regex
 			// 1.1
-			"[0-9]+[.][0-9]+",
+			"[0-9]+[.][0-9]+[a-z]*",
 			// 1
-			"[0-9]+",
+			"[0-9]+[a-z]*",
 			// 1.1.1
 			"[0-9]+[.][0-9]+[.][0-9]+[a-z]*",
 			// 1.1.1.1

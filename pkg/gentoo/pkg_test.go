@@ -1185,6 +1185,25 @@ var _ = Describe("Gentoo Packages", func() {
 				Expect(gp.VersionSuffix).Should(Equal("_pre1"))
 			})
 		})
+
+		Context("GetPackageName4", func() {
+			gp, err := ParsePackageStr("sys-libs/timezone-data-2018i")
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check package name", func() {
+				Expect(gp.GetPackageName()).Should(Equal("sys-libs/timezone-data"))
+			})
+
+			It("Check package version", func() {
+				Expect(gp.Version).Should(Equal("2018i"))
+			})
+
+			It("Check package version suffix", func() {
+				Expect(gp.VersionSuffix).Should(Equal(""))
+			})
+		})
 	})
 
 })
