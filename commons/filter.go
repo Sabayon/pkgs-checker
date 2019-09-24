@@ -22,11 +22,8 @@ package commons
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
@@ -337,7 +334,7 @@ func (m *FilterMatrix) LoadInjectRule(r *FilterResource, rule *SarkFilterRuleCon
 	// Handle Files Rules
 	if len(rule.Files) > 0 {
 		for _, f := range rule.Files {
-			absfile, err := AbsPathFromBase((*r).Source, f)
+			absfile, err := AbsPathFromBase(filepath.Dir((*r).Source), f)
 			if err != nil {
 				return errors.New(
 					fmt.Sprintf("LoadInjectRule: Error on retrieve abs path for file %s: %s",
@@ -606,52 +603,6 @@ func NewFilter(settings *viper.Viper, l *logger.Logger, config *SarkConfig) (*Fi
 	return ans, nil
 }
 
-// Parse binhost Directory
-func (f *Filter) analyzeBinHostDirectory(binhostDir string) error {
-	var err error
-	var files []os.FileInfo
-	var categoryDirs []string = make([]string, 0)
-
-	files, err = ioutil.ReadDir(binhostDir)
-	if err != nil {
-		return errors.New(fmt.Sprintf("Error on read directory %s: %s",
-			binhostDir, err.Error()))
-	}
-
-	var regexCat = regexp.MustCompile(`^[a-z]+[-][a-z]+$`)
-	for _, file := range files {
-		f.logger.WithFields(logger.Fields{
-			"file": file.Name(),
-		}).Debugf("Processing file...")
-
-		if !file.IsDir() {
-			continue
-		}
-
-		// Check only directory of categories.
-		if !regexCat.MatchString(file.Name()) {
-			f.logger.WithFields(logger.Fields{
-				"file": file.Name(),
-			}).Debugf("Is not a category directory.")
-			continue
-		}
-
-		categoryDirs = append(categoryDirs, path.Join(binhostDir, file.Name()))
-	}
-
-	if len(categoryDirs) == 0 {
-		f.logger.Infoln("No directory of categories found. Nothing to filter.")
-		return nil
-	}
-
-	// TODO: handle this with concurrency
-	for _, cat := range categoryDirs {
-		_ = f.processCategoryDir(cat)
-	}
-
-	return nil
-}
-
 func (f *Filter) Run(binhostDir string) error {
 	var err error
 
@@ -661,7 +612,7 @@ func (f *Filter) Run(binhostDir string) error {
 
 	start := time.Now()
 	// Phase1: Analyze binhost Directory
-	err = f.analyzeBinHostDirectory(binhostDir)
+	err = AnalyzeBinHostDirectory(binhostDir, f.logger, &f.BinHostTree)
 	if err != nil {
 		return err
 	}
@@ -677,8 +628,8 @@ func (f *Filter) Run(binhostDir string) error {
 			return err
 		}
 		f.logger.Infoln(
-			fmt.Sprintf("Creation of filter matrix elapsed in %d µs.",
-				time.Now().Sub(start).Nanoseconds()/1e3))
+			fmt.Sprintf("Creation of filter matrix (%s) elapsed in %d µs.",
+				f.RulesTree.FilterType, time.Now().Sub(start).Nanoseconds()/1e3))
 
 	} else {
 		f.logger.Infof("No files found to filter. Nothing to do.")
@@ -793,54 +744,6 @@ func (f *Filter) CreateFilterMatrix() error {
 	if err != nil {
 		return err
 	}
-
-	return nil
-}
-
-func (f *Filter) processCategoryDir(dir string) error {
-	var files []os.FileInfo
-	var pkgFiles []string = make([]string, 0)
-	var err error
-	cat := path.Base(dir)
-
-	files, err = ioutil.ReadDir(dir)
-	if err != nil {
-		return errors.New(fmt.Sprintf("Error on read directory %s: %s",
-			dir, err.Error()))
-	}
-
-	var regexCat = regexp.MustCompile(`.tbz2$`)
-	for _, file := range files {
-		f.logger.WithFields(logger.Fields{
-			"file":     file.Name(),
-			"category": cat,
-		}).Debugf("Processing file...")
-
-		if file.IsDir() {
-			continue
-		}
-
-		// Check only directory of categories.
-		if !regexCat.MatchString(file.Name()) {
-			f.logger.WithFields(logger.Fields{
-				"file":     file.Name(),
-				"category": cat,
-			}).Debugf("File skipped.")
-			continue
-		}
-
-		pkgFiles = append(pkgFiles, path.Join(dir, file.Name()))
-	}
-
-	// Write to handle in mutual exclusion
-	if len(pkgFiles) > 0 {
-		f.BinHostTree[cat] = pkgFiles
-	}
-
-	logger.WithFields(logger.Fields{
-		"category": cat,
-		"files":    len(pkgFiles),
-	}).Debugf("Complete navigation of directory.")
 
 	return nil
 }
