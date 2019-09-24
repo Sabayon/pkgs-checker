@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestCommons(t *testing.T) {
+func TestFilter(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Filter Suite")
 }
