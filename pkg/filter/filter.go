@@ -399,14 +399,11 @@ func (m *FilterMatrix) LoadInjectRule(r *FilterResource, rule *sark.SarkFilterRu
 				err = m.processSarkBuildFile(remoteBuildfile, level, false)
 
 			} else {
-				resp, err := commons.GetResource(u[9:], apiKey, opts)
+				pkgs, err := pkglist.PkgListLoadResource(u[9:], apiKey, opts)
 				if err != nil {
 					return errors.New(
 						fmt.Sprintf("Error on fetch url %s: %s", u, err))
 				}
-
-				var pkgs []string
-				pkgs, err = pkglist.PkgListParser(resp)
 				if len(pkgs) > 0 {
 					br, _ := NewFilterResource(u, "pkglist", pkgs, nil)
 					m.AddResource(br)

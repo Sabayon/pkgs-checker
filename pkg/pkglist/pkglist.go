@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -32,7 +33,29 @@ import (
 	logger "github.com/sirupsen/logrus"
 
 	"github.com/Sabayon/pkgs-checker/pkg/binhostdir"
+	commons "github.com/Sabayon/pkgs-checker/pkg/commons"
+	gentoo "github.com/Sabayon/pkgs-checker/pkg/gentoo"
 )
+
+func PkgListLoadResource(resource, apiKey string, opts commons.HttpClientOpts) ([]string, error) {
+	var err error
+	var data []byte
+
+	if strings.HasPrefix(resource, "http") || strings.HasPrefix(resource, "https") {
+		data, err = commons.GetResource(resource, apiKey, opts)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		data, err = ioutil.ReadFile(resource)
+		if err != nil {
+			return nil, err
+		}
+	}
+	pkgs, err := PkgListParser(data)
+
+	return pkgs, nil
+}
 
 func PkgListParser(data []byte) ([]string, error) {
 	var ans []string = make([]string, 0)
@@ -50,6 +73,61 @@ func PkgListParser(data []byte) ([]string, error) {
 	}
 
 	return ans, nil
+}
+
+func PkgListConvertToMap(pkgs []string) (map[string][]gentoo.GentooPackage, error) {
+	ans := make(map[string][]gentoo.GentooPackage, 0)
+
+	for _, pkg := range pkgs {
+		gp, err := gentoo.ParsePackageStr(pkg)
+		if err != nil {
+			return nil, err
+		}
+
+		if _, ok := ans[gp.Category]; !ok {
+			ans[gp.Category] = make([]gentoo.GentooPackage, 0)
+		}
+		ans[gp.Category] = append(ans[gp.Category], *gp)
+	}
+
+	return ans, nil
+}
+func PkgListIntersect(list1Map, list2Map map[string][]gentoo.GentooPackage) []string {
+	ans := make([]string, 0)
+	mpkgs := make(map[string]bool, 0)
+
+	for category, pkgs := range list1Map {
+		if pkgs2, ok := list2Map[category]; !ok {
+			// POST: category not available on list2
+			continue
+		} else {
+			for _, pkg := range pkgs {
+				for _, pkg2 := range pkgs2 {
+					if pkg.OfPackage(&pkg2) {
+						mpkgs[pkg.GetPackageName()] = true
+					}
+				}
+			}
+		}
+	}
+
+	for p, _ := range mpkgs {
+		ans = append(ans, p)
+	}
+
+	return ans
+}
+
+func PkgListIntersectFromLists(list1, list2 []string) ([]string, error) {
+	list1Map, err := PkgListConvertToMap(list1)
+	if err != nil {
+		return nil, err
+	}
+	list2Map, err := PkgListConvertToMap(list2)
+	if err != nil {
+		return nil, err
+	}
+	return PkgListIntersect(list1Map, list2Map), nil
 }
 
 func PkgListCreate(binhostDir string, log *logger.Logger) ([]string, error) {
@@ -84,6 +162,42 @@ func PkgListCreate(binhostDir string, log *logger.Logger) ([]string, error) {
 					fmt.Sprintf("%s/%s",
 						cat, f[0:strings.Index(f, filepath.Ext(f))]))
 			}
+		}
+	}
+
+	return ans, nil
+}
+
+func PkgListCreateToMap(binhostDir string, log *logger.Logger) (map[string][]gentoo.GentooPackage,
+	error) {
+	if binhostDir == "" {
+		return nil, errors.New("Invalid binhostDir")
+	}
+	binHostTree := make(map[string][]string, 0)
+
+	err := binhostdir.AnalyzeBinHostDirectory(binhostDir, log, &binHostTree)
+	if err != nil {
+		return nil, err
+	}
+
+	ans := make(map[string][]gentoo.GentooPackage, 0)
+	if len(binHostTree) > 0 {
+		for cat, pkgs := range binHostTree {
+			sort.Strings(pkgs)
+
+			gpkgs := make([]gentoo.GentooPackage, 0, len(pkgs))
+			for idx, p := range pkgs {
+				f := filepath.Base(p)
+				gp, err := gentoo.ParsePackageStr(
+					fmt.Sprintf("%s/%s",
+						cat, f[0:strings.Index(f, filepath.Ext(f))]))
+				if err != nil {
+					return nil, err
+				}
+				gpkgs[idx] = *gp
+			}
+
+			ans[cat] = gpkgs
 		}
 	}
 
