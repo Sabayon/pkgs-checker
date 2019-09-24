@@ -123,6 +123,45 @@ func PkgListIntersect(list1Map, list2Map map[string][]gentoo.GentooPackage) []st
 	return ans
 }
 
+func PkgListWithoutVersions(list []string) ([]string, error) {
+
+	list1Map, err := PkgListConvertToMap(list)
+	if err != nil {
+		return nil, err
+	}
+
+	m := make(map[string]bool, 0)
+	ans := make([]string, 0)
+
+	for _, pkgs := range list1Map {
+		for _, pkg := range pkgs {
+			m[pkg.GetPackageName()] = true
+		}
+	}
+
+	for k, _ := range m {
+		ans = append(ans, k)
+	}
+
+	return ans, nil
+}
+
+func PkgListPkgsNotInList(list1, list2 []string) []string {
+	ans := make([]string, 0)
+	list2map := make(map[string]bool, 0)
+	for _, pkg := range list2 {
+		list2map[pkg] = true
+	}
+
+	for _, pkg := range list1 {
+		if _, ok := list2map[pkg]; !ok {
+			ans = append(ans, pkg)
+		}
+	}
+
+	return ans
+}
+
 func PkgListIntersectFromLists(list1, list2 []string) ([]string, error) {
 	list1Map, err := PkgListConvertToMap(list1)
 	if err != nil {
