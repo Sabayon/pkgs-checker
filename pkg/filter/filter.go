@@ -383,17 +383,11 @@ func (m *FilterMatrix) LoadInjectRule(r *FilterResource, rule *sark.SarkFilterRu
 			}
 
 			if strings.HasPrefix(u, "buildfile|") {
-				resp, err := commons.GetResource(u[10:], apiKey, opts)
+				remoteBuildfile, err := sark.NewSarkConfigFromResource(
+					m.Father.settings,
+					u[10:], apiKey, opts)
 				if err != nil {
-					return errors.New(fmt.Sprintf("Error on fetch url %s: %s", u, err))
-				}
-
-				var remoteBuildfile *sark.SarkConfig
-				remoteBuildfile, err = sark.NewSarkConfigFromBytes(m.Father.settings, resp)
-				if err != nil {
-					return errors.New(
-						fmt.Sprintf("LoadInjectRule: Error on parse data from url %s: %s",
-							u, err))
+					return errors.New(fmt.Sprintf("Error on load resource url %s: %s", u, err))
 				}
 				remoteBuildfile.Id = u
 				err = m.processSarkBuildFile(remoteBuildfile, level, false)
