@@ -3,8 +3,6 @@
 Tool used for different tasks on Sabayon build process.
 
 ```bash
-
-
 $# pkgs-checker --help
 Sabayon packages checker
 
@@ -15,6 +13,7 @@ Available Commands:
   filter      Filter bin-host packages/directory.
   hash        Hashing packages
   help        Help about any command
+  pkglist     Manage pkglist files.
 
 Flags:
   -c, --concurrency       Enable concurrency process.
@@ -26,7 +25,6 @@ Flags:
       --version           version for this command
 
 Use " [command] --help" for more information about a command.
-
 ```
 
 ## *filter* command
@@ -62,6 +60,58 @@ Global Flags:
                           [DEBUG, INFO, WARN, ERROR] (default "INFO")
   -v, --verbose           Enable verbose logging on stdout.
 
+```
+
+## *pkglist* command
+
+*pkglist* command permits to work with pkglist files.
+
+```bash
+$ pkgs-checker pkglist --help
+Manage pkglist files.
+
+Usage:
+   pkglist [command]
+
+Available Commands:
+  create      Create pkglist file.
+
+Flags:
+  -h, --help   help for pkglist
+
+Global Flags:
+  -c, --concurrency       Enable concurrency process.
+  -l, --logfile string    Logfile Path. Optional.
+  -L, --loglevel string   Set logging level.
+                          [DEBUG, INFO, WARN, ERROR] (default "INFO")
+  -v, --verbose           Enable verbose logging on stdout.
+
+Use " pkglist [command] --help" for more information about a command.
+```
+
+### *create* command
+
+Print or write a file with package list available to a binhost directory.
+
+```bash
+$# pkgs-checker pkglist create --help
+Create pkglist file.
+
+Usage:
+   pkglist create [OPTIONS] [flags]
+
+Flags:
+  -d, --binhost-dir string    bin-hosts directory where compute pkglist.
+  -h, --help                  help for create
+  -f, --pkglist-file string   Path of pkglist file.
+                              Default output to stdout with format: category/pkgname-pkgversion
+
+Global Flags:
+  -c, --concurrency       Enable concurrency process.
+  -l, --logfile string    Logfile Path. Optional.
+  -L, --loglevel string   Set logging level.
+                          [DEBUG, INFO, WARN, ERROR] (default "INFO")
+  -v, --verbose           Enable verbose logging on stdout.
 ```
 
 ## *hash* command
