@@ -32,6 +32,7 @@ func NewPkglistCommand() *cobra.Command {
 	cmd.AddCommand(
 		newPkglistCreateCommand(),
 		newPkglistIntersectCommand(),
+		newPkglistShowCommand(),
 	)
 
 	return cmd
