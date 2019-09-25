@@ -14,6 +14,7 @@ Available Commands:
   hash        Hashing packages
   help        Help about any command
   pkglist     Manage pkglist files.
+  sark        Manage sark process.
 
 Flags:
   -c, --concurrency       Enable concurrency process.
@@ -67,7 +68,8 @@ Global Flags:
 *pkglist* command permits to work with pkglist files.
 
 ```bash
-$ pkgs-checker pkglist --help
+
+$# pkgs-checker pkglist --help
 Manage pkglist files.
 
 Usage:
@@ -75,6 +77,8 @@ Usage:
 
 Available Commands:
   create      Create pkglist file.
+  intersect   Search duplicate package between multiple pkglist.
+  show        Show pkglist from one or multiple resources.
 
 Flags:
   -h, --help   help for pkglist
@@ -87,6 +91,33 @@ Global Flags:
   -v, --verbose           Enable verbose logging on stdout.
 
 Use " pkglist [command] --help" for more information about a command.
+```
+
+### *intersect* command
+
+Search packages available in multiple pkglist.
+
+```
+$# pkgs-checker pkglist intersect --help
+Search duplicate package between multiple pkglist.
+
+Usage:
+   pkglist intersect [OPTIONS] [flags]
+
+Examples:
+$> pkgs-checker pkglist intersect -r https://server1/sbi/namespace/base-arm/base-arm-binhost/base-arm.pkglist,https://server2/sbi/namespace/core-arm/core-arm-binhost/core-arm.pkglist
+
+Flags:
+  -h, --help              help for intersect
+  -r, --pkglist strings   Path or URL of pkglist resource.
+  -q, --quiet             Quiet output.
+
+Global Flags:
+  -c, --concurrency       Enable concurrency process.
+  -l, --logfile string    Logfile Path. Optional.
+  -L, --loglevel string   Set logging level.
+                          [DEBUG, INFO, WARN, ERROR] (default "INFO")
+  -v, --verbose           Enable verbose logging on stdout.
 ```
 
 ### *create* command
@@ -105,6 +136,96 @@ Flags:
   -h, --help                  help for create
   -f, --pkglist-file string   Path of pkglist file.
                               Default output to stdout with format: category/pkgname-pkgversion
+
+Global Flags:
+  -c, --concurrency       Enable concurrency process.
+  -l, --logfile string    Logfile Path. Optional.
+  -L, --loglevel string   Set logging level.
+                          [DEBUG, INFO, WARN, ERROR] (default "INFO")
+  -v, --verbose           Enable verbose logging on stdout.
+```
+
+### *show* command
+
+Retrieve list of packages from multiple resources (URL or local files).
+
+```
+$# pkgs-checker pkglist show --help
+Show pkglist from one or multiple resources.
+
+Usage:
+   pkglist show [OPTIONS] [flags]
+
+Examples:
+$> pkgs-checker pkglist show -r https://server1/sbi/namespace/base-arm/base-arm-binhost/base-arm.pkglist,https://server2/sbi/namespace/core-arm/core-arm-binhost/core-arm.pkglist
+
+Flags:
+  -h, --help              help for show
+  -r, --pkglist strings   Path or URL of pkglist resource.
+  -q, --quiet             Quiet output.
+
+Global Flags:
+  -c, --concurrency       Enable concurrency process.
+  -l, --logfile string    Logfile Path. Optional.
+  -L, --loglevel string   Set logging level.
+                          [DEBUG, INFO, WARN, ERROR] (default "INFO")
+  -v, --verbose           Enable verbose logging on stdout.
+```
+
+## *sark* command
+
+Commands for help on SARK processes.
+
+```
+$# pkgs-checker sark
+Manage sark process.
+
+Usage:
+   sark [command]
+
+Available Commands:
+  compare     Compare sark targets with pkglist files
+
+Flags:
+  -h, --help   help for sark
+
+Global Flags:
+  -c, --concurrency       Enable concurrency process.
+  -l, --logfile string    Logfile Path. Optional.
+  -L, --loglevel string   Set logging level.
+                          [DEBUG, INFO, WARN, ERROR] (default "INFO")
+  -v, --verbose           Enable verbose logging on stdout.
+
+Use " sark [command] --help" for more information about a command.
+```
+
+### *compare* subcommand
+
+Check for packages not defined on SARK build files or packages that are defined in SARK build files
+but not available on packages list.
+
+```
+$ ./pkgs-checker sark compare --help
+Compare sark targets with pkglist files
+
+Usage:
+   sark compare [OPTIONS] [flags]
+
+Examples:
+
+Show targets not present on package list:
+$> pkgs-checker sark compare -s core-staging1-build.yaml -r core-arm.pkglist -t -m
+
+Show packages not present between SARK targets:
+$> pkgs-checker sark compare -s core-staging1-build.yaml -r core-arm.pkglist -v -t
+
+
+Flags:
+  -h, --help                    help for compare
+  -m, --missing-packages        Show targets not present on pkglist(s).
+  -t, --missing-targets         Show packages not present on target.
+  -p, --pkglist-files strings   Path or URL of pkglist resources.
+  -s, --sark-files strings      Path or URL of sark config resources.
 
 Global Flags:
   -c, --concurrency       Enable concurrency process.
