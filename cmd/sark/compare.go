@@ -39,6 +39,13 @@ func newSarkCompareCommand() *cobra.Command {
 		Use:   "compare [OPTIONS]",
 		Short: "Compare sark targets with pkglist files",
 		Args:  cobra.OnlyValidArgs,
+		Example: `
+Show targets not present on package list:
+$> pkgs-checker sark compare -s core-staging1-build.yaml -r core-arm.pkglist -t -m
+
+Show packages not present between SARK targets:
+$> pkgs-checker sark compare -s core-staging1-build.yaml -r core-arm.pkglist -v -t
+`,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			if len(pkglist_files) == 0 {
 				fmt.Fprintln(os.Stderr, "No pkglist resources defined")

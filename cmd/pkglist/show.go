@@ -34,9 +34,10 @@ func newPkglistShowCommand() *cobra.Command {
 	var quiet bool
 
 	var cmd = &cobra.Command{
-		Use:   "show [OPTIONS]",
-		Short: "Show pkglist from one or multiple resources.",
-		Args:  cobra.OnlyValidArgs,
+		Use:     "show [OPTIONS]",
+		Short:   "Show pkglist from one or multiple resources.",
+		Args:    cobra.OnlyValidArgs,
+		Example: `$> pkgs-checker pkglist show -r https://server1/sbi/namespace/base-arm/base-arm-binhost/base-arm.pkglist,https://server2/sbi/namespace/core-arm/core-arm-binhost/core-arm.pkglist`,
 
 		PreRun: func(cmd *cobra.Command, args []string) {
 			if len(resources) == 0 {

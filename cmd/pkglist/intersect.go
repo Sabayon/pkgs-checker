@@ -40,9 +40,10 @@ func newPkglistIntersectCommand() *cobra.Command {
 	var quiet bool
 
 	var cmd = &cobra.Command{
-		Use:   "intersect [OPTIONS]",
-		Short: "Search duplicate package between multiple pkglist.",
-		Args:  cobra.OnlyValidArgs,
+		Use:     "intersect [OPTIONS]",
+		Short:   "Search duplicate package between multiple pkglist.",
+		Example: `$> pkgs-checker pkglist intersect -r https://server1/sbi/namespace/base-arm/base-arm-binhost/base-arm.pkglist,https://server2/sbi/namespace/core-arm/core-arm-binhost/core-arm.pkglist`,
+		Args:    cobra.OnlyValidArgs,
 
 		PreRun: func(cmd *cobra.Command, args []string) {
 			if len(resources) == 0 {
