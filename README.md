@@ -93,7 +93,7 @@ Global Flags:
 Use " pkglist [command] --help" for more information about a command.
 ```
 
-### *intersect* command
+### *pkglist intersect* command
 
 Search packages available in multiple pkglist.
 
@@ -120,7 +120,7 @@ Global Flags:
   -v, --verbose           Enable verbose logging on stdout.
 ```
 
-### *create* command
+### *pkglist create* command
 
 Print or write a file with package list available to a binhost directory.
 
@@ -145,7 +145,7 @@ Global Flags:
   -v, --verbose           Enable verbose logging on stdout.
 ```
 
-### *show* command
+### *pkglist show* command
 
 Retrieve list of packages from multiple resources (URL or local files).
 
@@ -199,7 +199,7 @@ Global Flags:
 Use " sark [command] --help" for more information about a command.
 ```
 
-### *compare* subcommand
+### *sark compare* command
 
 Check for packages not defined on SARK build files or packages that are defined in SARK build files
 but not available on packages list.
