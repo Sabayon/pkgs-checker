@@ -1204,6 +1204,25 @@ var _ = Describe("Gentoo Packages", func() {
 				Expect(gp.VersionSuffix).Should(Equal(""))
 			})
 		})
+
+		Context("GetPackageName5", func() {
+			gp, err := ParsePackageStr("net-im/zoom-bin-2.8.222599.0519")
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check package name", func() {
+				Expect(gp.GetPackageName()).Should(Equal("net-im/zoom-bin"))
+			})
+
+			It("Check package version", func() {
+				Expect(gp.Version).Should(Equal("2.8.222599.0519"))
+			})
+
+			It("Check package version suffix", func() {
+				Expect(gp.VersionSuffix).Should(Equal(""))
+			})
+		})
 	})
 
 })
