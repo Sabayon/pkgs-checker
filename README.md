@@ -161,6 +161,7 @@ $> pkgs-checker pkglist show -r https://server1/sbi/namespace/base-arm/base-arm-
 
 Flags:
   -h, --help              help for show
+  -p, --parse-pkgname     Parse package version string and hide entropy revision.
   -r, --pkglist strings   Path or URL of pkglist resource.
   -q, --quiet             Quiet output.
 
