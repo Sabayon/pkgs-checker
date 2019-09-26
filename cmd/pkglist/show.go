@@ -21,6 +21,7 @@ package pkglist
 import (
 	"fmt"
 	"os"
+	"sort"
 
 	"github.com/spf13/cobra"
 	settings "github.com/spf13/viper"
@@ -32,6 +33,7 @@ import (
 func newPkglistShowCommand() *cobra.Command {
 	var resources []string
 	var quiet bool
+	var parse bool
 
 	var cmd = &cobra.Command{
 		Use:     "show [OPTIONS]",
@@ -68,16 +70,38 @@ func newPkglistShowCommand() *cobra.Command {
 
 			// Print results
 			if len(plist) > 0 {
-				// Create map to avoid duplicate.
-				intersectMap := make(map[string]bool, 0)
-				for _, p := range plist {
-					intersectMap[p] = true
+
+				if parse {
+					emap, err := pkglist.PkgListConvertToMap(plist)
+					if err != nil {
+						fmt.Fprintf(os.Stderr, "Error on parse package name: %s\n", err.Error())
+						os.Exit(1)
+					}
+
+					plist = make([]string, 0)
+					for _, pkgs := range emap {
+						for _, p := range pkgs {
+							plist = append(plist, p.String())
+						}
+					}
+				} else {
+					// Create map to avoid duplicate.
+					pmap := make(map[string]bool, 0)
+					for _, p := range plist {
+						pmap[p] = true
+					}
+
+					plist = make([]string, 0)
+					for pkg, _ := range pmap {
+						plist = append(plist, pkg)
+					}
 				}
 
-				for pkg, _ := range intersectMap {
+				sort.Strings(plist)
+
+				for _, pkg := range plist {
 					fmt.Println(pkg)
 				}
-
 			} else if !quiet {
 				fmt.Println("No packages available.")
 			}
@@ -88,6 +112,7 @@ func newPkglistShowCommand() *cobra.Command {
 
 	flags.StringSliceVarP(&resources, "pkglist", "r", []string{}, "Path or URL of pkglist resource.")
 	flags.BoolVarP(&quiet, "quiet", "q", false, "Quiet output.")
+	flags.BoolVarP(&parse, "parse-pkgname", "p", false, "Parse package version string and hide entropy revision.")
 
 	return cmd
 }
