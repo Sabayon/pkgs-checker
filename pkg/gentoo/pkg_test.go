@@ -1223,6 +1223,25 @@ var _ = Describe("Gentoo Packages", func() {
 				Expect(gp.VersionSuffix).Should(Equal(""))
 			})
 		})
+
+		Context("GetPackageName6", func() {
+			gp, err := ParsePackageStr("dev-util/idea-community-2019.2.0.192.5728.98")
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check package name", func() {
+				Expect(gp.GetPackageName()).Should(Equal("dev-util/idea-community"))
+			})
+
+			It("Check package version", func() {
+				Expect(gp.Version).Should(Equal("2019.2.0.192.5728.98"))
+			})
+
+			It("Check package version suffix", func() {
+				Expect(gp.VersionSuffix).Should(Equal(""))
+			})
+		})
 	})
 
 })
