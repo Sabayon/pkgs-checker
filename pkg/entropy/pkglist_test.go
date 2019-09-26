@@ -54,4 +54,30 @@ var _ = Describe("Entropy Pkglist", func() {
 
 	})
 
+	Describe("Parse String2 without revision", func() {
+
+		ep, err := NewEntropyPackage("sys-fs/udftools-2.1")
+
+		Context("Check processing phase", func() {
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check element", func() {
+				Expect(ep).Should(Equal(&EntropyPackage{
+					GentooPackage: &GentooPackage{
+						Category:  "sys-fs",
+						Name:      "udftools",
+						Version:   "2.1",
+						Slot:      "0",
+						Condition: PkgCondEqual,
+					},
+					Revision: 0,
+				}))
+			})
+
+		})
+
+	})
+
 })
