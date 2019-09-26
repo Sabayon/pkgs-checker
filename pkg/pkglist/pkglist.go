@@ -34,7 +34,7 @@ import (
 
 	"github.com/Sabayon/pkgs-checker/pkg/binhostdir"
 	commons "github.com/Sabayon/pkgs-checker/pkg/commons"
-	gentoo "github.com/Sabayon/pkgs-checker/pkg/gentoo"
+	entropy "github.com/Sabayon/pkgs-checker/pkg/entropy"
 )
 
 func PkgListLoadResource(resource, apiKey string, opts commons.HttpClientOpts) ([]string, error) {
@@ -75,24 +75,25 @@ func PkgListParser(data []byte) ([]string, error) {
 	return ans, nil
 }
 
-func PkgListConvertToMap(pkgs []string) (map[string][]gentoo.GentooPackage, error) {
-	ans := make(map[string][]gentoo.GentooPackage, 0)
+func PkgListConvertToMap(pkgs []string) (map[string][]entropy.EntropyPackage, error) {
+	ans := make(map[string][]entropy.EntropyPackage, 0)
 
 	for _, pkg := range pkgs {
-		gp, err := gentoo.ParsePackageStr(pkg)
+		ep, err := entropy.NewEntropyPackage(pkg)
 		if err != nil {
 			return nil, err
 		}
 
-		if _, ok := ans[gp.Category]; !ok {
-			ans[gp.Category] = make([]gentoo.GentooPackage, 0)
+		if _, ok := ans[ep.Category]; !ok {
+			ans[ep.Category] = make([]entropy.EntropyPackage, 0)
 		}
-		ans[gp.Category] = append(ans[gp.Category], *gp)
+		ans[ep.Category] = append(ans[ep.Category], *ep)
 	}
 
 	return ans, nil
 }
-func PkgListIntersect(list1Map, list2Map map[string][]gentoo.GentooPackage) []string {
+
+func PkgListIntersect(list1Map, list2Map map[string][]entropy.EntropyPackage) []string {
 	ans := make([]string, 0)
 	mpkgs := make(map[string]bool, 0)
 
@@ -103,7 +104,7 @@ func PkgListIntersect(list1Map, list2Map map[string][]gentoo.GentooPackage) []st
 		} else {
 			for _, pkg := range pkgs {
 				for _, pkg2 := range pkgs2 {
-					if pkg.OfPackage(&pkg2) {
+					if pkg.OfPackage(pkg2.GentooPackage) {
 						mpkgs[pkg.GetPackageName()] = true
 						logger.Debugf("pkg %s (%s) duplicated.",
 							pkg.GetPackageName(), pkg2.GetPackageName())
@@ -212,7 +213,7 @@ func PkgListCreate(binhostDir string, log *logger.Logger) ([]string, error) {
 	return ans, nil
 }
 
-func PkgListCreateToMap(binhostDir string, log *logger.Logger) (map[string][]gentoo.GentooPackage,
+func PkgListCreateToMap(binhostDir string, log *logger.Logger) (map[string][]entropy.EntropyPackage,
 	error) {
 	if binhostDir == "" {
 		return nil, errors.New("Invalid binhostDir")
@@ -224,15 +225,15 @@ func PkgListCreateToMap(binhostDir string, log *logger.Logger) (map[string][]gen
 		return nil, err
 	}
 
-	ans := make(map[string][]gentoo.GentooPackage, 0)
+	ans := make(map[string][]entropy.EntropyPackage, 0)
 	if len(binHostTree) > 0 {
 		for cat, pkgs := range binHostTree {
 			sort.Strings(pkgs)
 
-			gpkgs := make([]gentoo.GentooPackage, 0, len(pkgs))
+			gpkgs := make([]entropy.EntropyPackage, 0, len(pkgs))
 			for idx, p := range pkgs {
 				f := filepath.Base(p)
-				gp, err := gentoo.ParsePackageStr(
+				gp, err := entropy.NewEntropyPackage(
 					fmt.Sprintf("%s/%s",
 						cat, f[0:strings.Index(f, filepath.Ext(f))]))
 				if err != nil {

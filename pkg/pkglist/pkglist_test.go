@@ -22,6 +22,7 @@ package pkglist_test
 import (
 	"fmt"
 
+	entropy "github.com/Sabayon/pkgs-checker/pkg/entropy"
 	gentoo "github.com/Sabayon/pkgs-checker/pkg/gentoo"
 	. "github.com/Sabayon/pkgs-checker/pkg/pkglist"
 
@@ -63,25 +64,31 @@ sys-libs/e2fsprogs-libs-1.45.0~0
 	Describe("Parse PkgList Convert", func() {
 
 		pkgs := []string{"sys-devel/gcc-8.2.0", "sys-libs/binutils-libs-2.32-r1"}
-		out := make(map[string][]gentoo.GentooPackage, 2)
-		out["sys-devel"] = []gentoo.GentooPackage{
-			gentoo.GentooPackage{
-				Slot:      "0",
-				Name:      "gcc",
-				Category:  "sys-devel",
-				Version:   "8.2.0",
-				Condition: gentoo.PkgCondEqual,
+		out := make(map[string][]entropy.EntropyPackage, 2)
+		out["sys-devel"] = []entropy.EntropyPackage{
+			entropy.EntropyPackage{
+				GentooPackage: &gentoo.GentooPackage{
+					Slot:      "0",
+					Name:      "gcc",
+					Category:  "sys-devel",
+					Version:   "8.2.0",
+					Condition: gentoo.PkgCondEqual,
+				},
+				Revision: 0,
 			},
 		}
 
-		out["sys-libs"] = []gentoo.GentooPackage{
-			gentoo.GentooPackage{
-				Slot:          "0",
-				Name:          "binutils-libs",
-				Category:      "sys-libs",
-				Version:       "2.32",
-				VersionSuffix: "-r1",
-				Condition:     gentoo.PkgCondEqual,
+		out["sys-libs"] = []entropy.EntropyPackage{
+			entropy.EntropyPackage{
+				GentooPackage: &gentoo.GentooPackage{
+					Slot:          "0",
+					Name:          "binutils-libs",
+					Category:      "sys-libs",
+					Version:       "2.32",
+					VersionSuffix: "-r1",
+					Condition:     gentoo.PkgCondEqual,
+				},
+				Revision: 0,
 			},
 		}
 
