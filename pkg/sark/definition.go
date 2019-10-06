@@ -70,12 +70,13 @@ type SarkBuildEquo struct {
 }
 
 type SarkBuildEquoDepsInstall struct {
-	Enable              int `mapstructure:"enable" yaml:"enable,omitempty"`
-	InstallAtoms        int `mapstructure:"install_atoms" yaml:"install_atoms,omitempty"`
-	DependencyScanDepth int `mapstructure:"dependency_scan_depth" yaml:"dependency_scan_depth,omitempty"`
-	PruneVirtuals       int `mapstructure:"prune_virtuals" yaml:"prune_virtuals,omitempty"`
-	InstallVersion      int `mapstructure:"install_version" yaml:"install_version,omitempty"`
-	SplitInstall        int `mapstructure:"split_install" yaml:"split_install,omitempty"`
+	Enable                   int `mapstructure:"enable" yaml:"enable,omitempty"`
+	InstallAtoms             int `mapstructure:"install_atoms" yaml:"install_atoms,omitempty"`
+	DependencyScanDepth      int `mapstructure:"dependency_scan_depth" yaml:"dependency_scan_depth,omitempty"`
+	DependencyIgnoreVersions int `mapstructure:"dependency_ignore_versions" yaml:"dependency_ignore_versions,omitempty"`
+	PruneVirtuals            int `mapstructure:"prune_virtuals" yaml:"prune_virtuals,omitempty"`
+	InstallVersion           int `mapstructure:"install_version" yaml:"install_version,omitempty"`
+	SplitInstall             int `mapstructure:"split_install" yaml:"split_install,omitempty"`
 }
 
 type SarkBuildEquoPackage struct {
