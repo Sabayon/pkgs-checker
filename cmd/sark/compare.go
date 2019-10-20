@@ -41,10 +41,10 @@ func newSarkCompareCommand() *cobra.Command {
 		Args:  cobra.OnlyValidArgs,
 		Example: `
 Show targets not present on package list:
-$> pkgs-checker sark compare -s core-staging1-build.yaml -r core-arm.pkglist -t -m
+$> pkgs-checker sark compare -s core-staging1-build.yaml -p core-arm.pkglist -v -m
 
 Show packages not present between SARK targets:
-$> pkgs-checker sark compare -s core-staging1-build.yaml -r core-arm.pkglist -v -t
+$> pkgs-checker sark compare -s core-staging1-build.yaml -p core-arm.pkglist -v -t
 `,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			if len(pkglist_files) == 0 {
