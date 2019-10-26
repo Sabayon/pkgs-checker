@@ -90,7 +90,7 @@ func AnalyzeBinHostDirectory(binhostDir string, log *logger.Logger, tree *map[st
 			binhostDir, err.Error()))
 	}
 
-	var regexCat = regexp.MustCompile(`^[a-z]+[-][a-z]+$`)
+	var regexCat = regexp.MustCompile(`(^[a-z]+[-][a-z]+$|virtual)`)
 	for _, file := range files {
 		log.WithFields(logger.Fields{
 			"file": file.Name(),
