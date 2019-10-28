@@ -1242,6 +1242,68 @@ var _ = Describe("Gentoo Packages", func() {
 				Expect(gp.VersionSuffix).Should(Equal(""))
 			})
 		})
+
+		Context("PkgWithUseFlags", func() {
+			gp, err := ParsePackageStr("dev-util/mottainai-agent-0.0_pre20191012[lxd]")
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check package name", func() {
+				Expect(gp.GetPackageName()).Should(Equal("dev-util/mottainai-agent"))
+			})
+
+			It("Check package version", func() {
+				Expect(gp.Version).Should(Equal("0.0"))
+			})
+
+			It("Check package version suffix", func() {
+				Expect(gp.VersionSuffix).Should(Equal("_pre20191012"))
+			})
+
+			It("Check package use flags", func() {
+				Expect(gp.UseFlags).Should(Equal([]string{"lxd"}))
+			})
+		})
+
+		Context("PkgWithUseFlags2", func() {
+			gp, err := ParsePackageStr("dev-util/mottainai-agent-0.0_pre20191012[lxd,zfs,3dnow]")
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check package name", func() {
+				Expect(gp.GetPackageName()).Should(Equal("dev-util/mottainai-agent"))
+			})
+
+			It("Check package version", func() {
+				Expect(gp.Version).Should(Equal("0.0"))
+			})
+
+			It("Check package version suffix", func() {
+				Expect(gp.VersionSuffix).Should(Equal("_pre20191012"))
+			})
+
+			It("Check package use flags", func() {
+				Expect(gp.UseFlags).Should(Equal([]string{"lxd", "zfs", "3dnow"}))
+			})
+		})
+
+		Context("PkgWithUseFlags3", func() {
+			gp, err := ParsePackageStr("dev-util/mottainai-agent[lxd,zfs,3dnow]")
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check package name", func() {
+				Expect(gp.GetPackageName()).Should(Equal("dev-util/mottainai-agent"))
+			})
+
+			It("Check package use flags", func() {
+				Expect(gp.UseFlags).Should(Equal([]string{"lxd", "zfs", "3dnow"}))
+			})
+		})
+
 	})
 
 })

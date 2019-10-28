@@ -62,6 +62,7 @@ type GentooPackage struct {
 	Slot          string
 	Condition     PackageCond
 	Repository    string
+	UseFlags      []string
 }
 
 func (p *GentooPackage) String() string {
@@ -197,6 +198,19 @@ func ParsePackageStr(pkg string) (*GentooPackage, error) {
 	ans := GentooPackage{
 		Slot:      "0",
 		Condition: PkgCondInvalid,
+	}
+
+	// Check if pkg string contains inline use flags
+	regexUses := regexp.MustCompile(
+		"\\[([a-z]*[-]*[0-9]*[,]*)+\\]*$",
+	)
+	mUses := regexUses.FindAllString(pkg, -1)
+	if len(mUses) > 0 {
+		ans.UseFlags = strings.Split(
+			pkg[len(pkg)-len(mUses[0])+1:len(pkg)-1],
+			",",
+		)
+		pkg = pkg[:len(pkg)-len(mUses[0])]
 	}
 
 	if strings.HasPrefix(pkg, ">=") {
