@@ -427,6 +427,9 @@ func (m *FilterMatrix) LoadInjectRules(source, rtype string, rules []sark.SarkFi
 
 	r, err = NewFilterResource(source, rtype, nil, nil)
 
+	// Add itself
+	m.AddResource(r)
+
 	for _, rule := range rules {
 		err = m.LoadInjectRule(r, &rule, 1)
 		if err != nil {
@@ -451,7 +454,7 @@ func (m *FilterMatrix) CreateBranches() error {
 				m.Log(logger.DebugLevel, "Branch for category %s already present.",
 					category)
 			} else {
-				branch, _ := NewFilterMatrixBranch(category)
+				branch, _ = NewFilterMatrixBranch(category)
 				branch.CategoryFiltered = true
 				branch.Matrix = m
 				branch.Resources = make([]*FilterResource, 0)
@@ -483,7 +486,7 @@ func (m *FilterMatrix) CreateBranches() error {
 				}
 				branch.Matrix = m
 				m.Branches[gp.Category] = branch
-				m.Log(logger.DebugLevel, "Added branch for category %s for package %s.",
+				m.Log(logger.DebugLevel, "Added branch for category %s and for package %s.",
 					gp.Category, pkg)
 			}
 			branch.Packages = append(branch.Packages, gp)
