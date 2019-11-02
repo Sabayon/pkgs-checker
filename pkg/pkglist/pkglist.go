@@ -147,6 +147,39 @@ func PkgListWithoutVersions(list []string) ([]string, error) {
 	return ans, nil
 }
 
+func PkgListWithSlot(list []string, withSlotZero bool) ([]string, error) {
+	var slot string
+
+	list1Map, err := PkgListConvertToMap(list)
+	if err != nil {
+		return nil, err
+	}
+
+	m := make(map[string]bool, 0)
+	ans := make([]string, 0)
+
+	for _, pkgs := range list1Map {
+		for _, pkg := range pkgs {
+			slot = ""
+			if pkg.Slot != "" && (withSlotZero || pkg.Slot != "0") {
+				slot = pkg.Slot
+			}
+
+			if slot != "" {
+				m[fmt.Sprintf("%s:%s", pkg.GetPackageName(), slot)] = true
+			} else {
+				m[pkg.GetPackageName()] = true
+			}
+		}
+	}
+
+	for k, _ := range m {
+		ans = append(ans, k)
+	}
+
+	return ans, nil
+}
+
 func PkgListPkgsNotInList(list1, list2 []string) []string {
 	ans := make([]string, 0)
 	list2map := make(map[string]bool, 0)

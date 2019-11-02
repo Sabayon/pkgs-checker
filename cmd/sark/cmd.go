@@ -31,6 +31,7 @@ func NewSarkCommand() *cobra.Command {
 
 	cmd.AddCommand(
 		newSarkCompareCommand(),
+		newSarkPkglistCommand(),
 	)
 
 	return cmd
