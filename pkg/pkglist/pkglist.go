@@ -21,6 +21,7 @@ package pkglist
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -36,6 +37,29 @@ import (
 	commons "github.com/Sabayon/pkgs-checker/pkg/commons"
 	entropy "github.com/Sabayon/pkgs-checker/pkg/entropy"
 )
+
+type PkgListReport struct {
+	Repository   string                   `json:"repository,omitempty"`
+	Architecture string                   `json:"arch,omitempty"`
+	Packages     []entropy.EntropyPackage `json:"packages,omitempty"`
+}
+
+func NewPkgListReport(repo, arch string, pkgs []entropy.EntropyPackage) *PkgListReport {
+	return &PkgListReport{
+		Repository:   repo,
+		Architecture: arch,
+		Packages:     pkgs,
+	}
+}
+
+func (r *PkgListReport) WriteTo(w io.Writer) (err error) {
+	enc := json.NewEncoder(w)
+	err = enc.Encode(*r)
+	if err != nil {
+		return
+	}
+	return
+}
 
 func PkgListLoadResource(resource, apiKey string, opts commons.HttpClientOpts) ([]string, error) {
 	var err error

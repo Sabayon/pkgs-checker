@@ -55,14 +55,14 @@ const (
 )
 
 type GentooPackage struct {
-	Name          string
-	Category      string
-	Version       string
-	VersionSuffix string
-	Slot          string
+	Name          string `json:"name",omitempty"`
+	Category      string `json:"category",omitempty"`
+	Version       string `json:"version",omitempty"`
+	VersionSuffix string `json:"version_suffix",omitempty"`
+	Slot          string `json:"slot",omitempty"`
 	Condition     PackageCond
-	Repository    string
-	UseFlags      []string
+	Repository    string   `json:"repository",omitempty"`
+	UseFlags      []string `json:"use_flags",omitempty"`
 }
 
 func (p *GentooPackage) String() string {

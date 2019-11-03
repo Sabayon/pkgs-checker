@@ -27,13 +27,14 @@ import (
 	settings "github.com/spf13/viper"
 
 	"github.com/Sabayon/pkgs-checker/pkg/commons"
+	entropy "github.com/Sabayon/pkgs-checker/pkg/entropy"
 	"github.com/Sabayon/pkgs-checker/pkg/pkglist"
 )
 
 func newPkglistShowCommand() *cobra.Command {
 	var resources []string
-	var quiet bool
-	var parse bool
+	var repo, arch string
+	var quiet, parse, jsonOutput bool
 
 	var cmd = &cobra.Command{
 		Use:     "show [OPTIONS]",
@@ -46,6 +47,10 @@ func newPkglistShowCommand() *cobra.Command {
 				fmt.Fprintln(os.Stderr, "No pkglist resource defined")
 				os.Exit(1)
 			}
+			if jsonOutput && !parse {
+				fmt.Fprintln(os.Stderr, "json option require parse option.")
+				os.Exit(1)
+			}
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			opts := commons.NewHttpClientDefaultOpts()
@@ -54,7 +59,9 @@ func newPkglistShowCommand() *cobra.Command {
 			}
 			apiKey := settings.GetString("apikey")
 
+			pmapPkgs := make(map[string]entropy.EntropyPackage, 0)
 			plist := make([]string, 0)
+			var pkgsJsonReport *pkglist.PkgListReport
 
 			// TODO: Improve compare algorithm
 			for _, r1 := range resources {
@@ -79,11 +86,16 @@ func newPkglistShowCommand() *cobra.Command {
 					}
 
 					plist = make([]string, 0)
+					// Create map to avoid duplicate.
 					for _, pkgs := range emap {
 						for _, p := range pkgs {
+							if jsonOutput {
+								pmapPkgs[p.String()] = p
+							}
 							plist = append(plist, p.String())
 						}
 					}
+
 				} else {
 					// Create map to avoid duplicate.
 					pmap := make(map[string]bool, 0)
@@ -99,9 +111,22 @@ func newPkglistShowCommand() *cobra.Command {
 
 				sort.Strings(plist)
 
-				for _, pkg := range plist {
-					fmt.Println(pkg)
+				if jsonOutput {
+					pkgsJsonReport = pkglist.NewPkgListReport(repo, arch, make([]entropy.EntropyPackage, 0))
+
+					for _, pkg := range plist {
+						p := pmapPkgs[pkg]
+						p.Repository = repo
+						pkgsJsonReport.Packages = append(pkgsJsonReport.Packages, pmapPkgs[pkg])
+					}
+
+					pkgsJsonReport.WriteTo(os.Stdout)
+				} else {
+					for _, pkg := range plist {
+						fmt.Println(pkg)
+					}
 				}
+
 			} else if !quiet {
 				fmt.Println("No packages available.")
 			}
@@ -110,9 +135,14 @@ func newPkglistShowCommand() *cobra.Command {
 
 	var flags = cmd.Flags()
 
-	flags.StringSliceVarP(&resources, "pkglist", "r", []string{}, "Path or URL of pkglist resource.")
+	flags.StringVar(&repo, "repo", "", "Name of the repository. Used only with --json.")
+	flags.StringVar(&arch, "arch", "", "Architecture of the repository. Used only with --json.")
+	flags.StringSliceVarP(&resources, "pkglist", "r", []string{},
+		"Path or URL of pkglist resource.")
+	flags.BoolVarP(&jsonOutput, "json", "j", false, "Package list in JSON")
 	flags.BoolVarP(&quiet, "quiet", "q", false, "Quiet output.")
-	flags.BoolVarP(&parse, "parse-pkgname", "p", false, "Parse package version string and hide entropy revision.")
+	flags.BoolVarP(&parse, "parse-pkgname", "p", false,
+		"Parse package version string and hide entropy revision.")
 
 	return cmd
 }
