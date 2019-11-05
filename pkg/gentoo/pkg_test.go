@@ -35,6 +35,118 @@ var _ = Describe("Gentoo Packages", func() {
 
 	Describe("Parse package strings", func() {
 
+		// https://devmanual.gentoo.org/general-concepts/dependencies/
+		Context("Parse dependency1", func() {
+
+			pkg, err := ParsePackageStr(">=sys-libs/ncurses-5.2-r5:0=")
+			g := GentooPackage{
+				Name:          "ncurses",
+				Category:      "sys-libs",
+				Condition:     PkgCondGreaterEqual,
+				Slot:          "0=",
+				Version:       "5.2",
+				VersionSuffix: "-r5",
+				Repository:    "",
+			}
+			fmt.Println(fmt.Sprintf("pkg %s", pkg))
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check pkgName", func() {
+				Expect((*pkg).Name).Should(Equal("ncurses"))
+			})
+
+			It("Check category", func() {
+				Expect((*pkg).Category).Should(Equal("sys-libs"))
+			})
+
+			It("Check cond", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg).Condition).Should(Equal(g.Condition))
+			})
+
+			It("Check struct", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg)).Should(Equal(g))
+			})
+		})
+
+		Context("Parse dependency2", func() {
+
+			pkg, err := ParsePackageStr(">=sys-libs/ncurses-5.2-r5:0*")
+			g := GentooPackage{
+				Name:          "ncurses",
+				Category:      "sys-libs",
+				Condition:     PkgCondGreaterEqual,
+				Slot:          "0*",
+				Version:       "5.2",
+				VersionSuffix: "-r5",
+				Repository:    "",
+			}
+			fmt.Println(fmt.Sprintf("pkg %s", pkg))
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check pkgName", func() {
+				Expect((*pkg).Name).Should(Equal("ncurses"))
+			})
+
+			It("Check category", func() {
+				Expect((*pkg).Category).Should(Equal("sys-libs"))
+			})
+
+			It("Check cond", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg).Condition).Should(Equal(g.Condition))
+			})
+
+			It("Check struct", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg)).Should(Equal(g))
+			})
+		})
+
+		Context("Parse dependency3", func() {
+
+			pkg, err := ParsePackageStr(">=sys-libs/ncurses-5.2-r5:*")
+			g := GentooPackage{
+				Name:          "ncurses",
+				Category:      "sys-libs",
+				Condition:     PkgCondGreaterEqual,
+				Slot:          "*",
+				Version:       "5.2",
+				VersionSuffix: "-r5",
+				Repository:    "",
+			}
+			fmt.Println(fmt.Sprintf("pkg %s", pkg))
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check pkgName", func() {
+				Expect((*pkg).Name).Should(Equal("ncurses"))
+			})
+
+			It("Check category", func() {
+				Expect((*pkg).Category).Should(Equal("sys-libs"))
+			})
+
+			It("Check cond", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg).Condition).Should(Equal(g.Condition))
+			})
+
+			It("Check struct", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg)).Should(Equal(g))
+			})
+		})
+
 		// Tests by: https://wiki.gentoo.org/wiki/Version_specifier
 
 		Context("Matches any version of a package", func() {
@@ -1301,6 +1413,25 @@ var _ = Describe("Gentoo Packages", func() {
 
 			It("Check package use flags", func() {
 				Expect(gp.UseFlags).Should(Equal([]string{"lxd", "zfs", "3dnow"}))
+			})
+		})
+
+		Context("PerlVersion1", func() {
+			gp, err := ParsePackageStr("virtual/perl-Storable-3.80.100_rc")
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check package name", func() {
+				Expect(gp.GetPackageName()).Should(Equal("virtual/perl-Storable"))
+			})
+
+			It("Check package version", func() {
+				Expect(gp.Version).Should(Equal("3.80.100"))
+			})
+
+			It("Check package version suffix", func() {
+				Expect(gp.VersionSuffix).Should(Equal("_rc"))
 			})
 		})
 

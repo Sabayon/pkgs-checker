@@ -263,7 +263,7 @@ func ParsePackageStr(pkg string) (*GentooPackage, error) {
 	}
 
 	regexPkg := regexp.MustCompile(
-		fmt.Sprintf("[-](%s|%s|%s|%s|%s|%s)((%s|%s|%s|%s|%s|%s)+)*$",
+		fmt.Sprintf("[-](%s|%s|%s|%s|%s|%s)((%s|%s|%s|%s|%s|%s|%s)+)*$",
 			// Version regex
 			// 1.1
 			"[0-9]+[.][0-9]+[a-z]*",
@@ -282,6 +282,8 @@ func ParsePackageStr(pkg string) (*GentooPackage, error) {
 			"_p[0-9]+",
 			"_pre[0-9]*",
 			"_rc[0-9]+",
+			// handle also rc without number
+			"_rc",
 			"_alpha",
 			"_beta",
 		),
