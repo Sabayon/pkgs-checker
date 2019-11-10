@@ -30,6 +30,10 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
+const (
+	RegexCatString = `(^[a-z]+[0-9]*[a-z]*[-][a-z]+[0-9]*[a-z]*$|virtual)`
+)
+
 func ProcessCategoryDir(dir string, log *logger.Logger, tree *map[string][]string) error {
 	var files []os.FileInfo
 	var pkgFiles []string = make([]string, 0)
@@ -90,7 +94,7 @@ func AnalyzeBinHostDirectory(binhostDir string, log *logger.Logger, tree *map[st
 			binhostDir, err.Error()))
 	}
 
-	var regexCat = regexp.MustCompile(`(^[a-z]+[-][a-z]+$|virtual)`)
+	var regexCat = regexp.MustCompile(RegexCatString)
 	for _, file := range files {
 		log.WithFields(logger.Fields{
 			"file": file.Name(),
