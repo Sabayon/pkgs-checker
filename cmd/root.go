@@ -26,6 +26,7 @@ import (
 	"github.com/spf13/cobra"
 	settings "github.com/spf13/viper"
 
+	"github.com/Sabayon/pkgs-checker/cmd/pkg"
 	"github.com/Sabayon/pkgs-checker/cmd/pkglist"
 	"github.com/Sabayon/pkgs-checker/cmd/sark"
 	"github.com/Sabayon/pkgs-checker/pkg/commons"
@@ -61,6 +62,7 @@ func init() {
 	rootCmd.AddCommand(
 		newHashCommand(),
 		newFilterCommand(),
+		pkg.NewPkgCommand(),
 		pkglist.NewPkglistCommand(),
 		sark.NewSarkCommand(),
 	)
