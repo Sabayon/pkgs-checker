@@ -1435,6 +1435,64 @@ var _ = Describe("Gentoo Packages", func() {
 			})
 		})
 
+		Context("ConfrontVersions", func() {
+			gp, err := ParsePackageStr(">=sys-power-5.3/acpi_call-3.17.5.3.2.1")
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check package name", func() {
+				Expect(gp.GetPackageName()).Should(Equal("sys-power-5.3/acpi_call"))
+			})
+
+			It("Check package category", func() {
+				Expect(gp.Category).Should(Equal("sys-power-5.3"))
+			})
+			It("Check package version", func() {
+				Expect(gp.Version).Should(Equal("3.17.5.3.2.1"))
+			})
+
+			gp2, err := ParsePackageStr("sys-power-5.3/acpi_call-3.17.5.3.10")
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check package name", func() {
+				Expect(gp2.GetPackageName()).Should(Equal("sys-power-5.3/acpi_call"))
+			})
+
+			It("Check package category", func() {
+				Expect(gp2.Category).Should(Equal("sys-power-5.3"))
+			})
+			It("Check package version", func() {
+				Expect(gp2.Version).Should(Equal("3.17.5.3.10"))
+			})
+
+			It("Check Admit", func() {
+				Expect(gp.Admit(gp2)).Should(Equal(true))
+			})
+
+			gp3, err := ParsePackageStr("sys-power-5.3/acpi_call-3.17.5.4")
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check package name", func() {
+				Expect(gp3.GetPackageName()).Should(Equal("sys-power-5.3/acpi_call"))
+			})
+
+			It("Check package category", func() {
+				Expect(gp3.Category).Should(Equal("sys-power-5.3"))
+			})
+			It("Check package version", func() {
+				Expect(gp3.Version).Should(Equal("3.17.5.4"))
+			})
+
+			It("Check Admit", func() {
+				Expect(gp.Admit(gp3)).Should(Equal(true))
+			})
+		})
+
 	})
 
 })
