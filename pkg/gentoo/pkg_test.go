@@ -1493,6 +1493,45 @@ var _ = Describe("Gentoo Packages", func() {
 			})
 		})
 
+		Context("ConfrontVersions2", func() {
+			gp, err := ParsePackageStr(">=net-vpn-4.9/wireguard-0.0.1")
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check package name", func() {
+				Expect(gp.GetPackageName()).Should(Equal("net-vpn-4.9/wireguard"))
+			})
+
+			It("Check package category", func() {
+				Expect(gp.Category).Should(Equal("net-vpn-4.9"))
+			})
+			It("Check package version", func() {
+				Expect(gp.Version).Should(Equal("0.0.1"))
+			})
+
+			gp2, err := ParsePackageStr("net-vpn-4.9/wireguard-0.0.20190406.4.9.172-r1")
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check package name", func() {
+				Expect(gp2.GetPackageName()).Should(Equal("net-vpn-4.9/wireguard"))
+			})
+
+			It("Check package category", func() {
+				Expect(gp2.Category).Should(Equal("net-vpn-4.9"))
+			})
+			It("Check package version", func() {
+				Expect(gp2.Version).Should(Equal("0.0.20190406.4.9.172"))
+			})
+
+			It("Check Admit", func() {
+				Expect(gp.Admit(gp2)).Should(Equal(true))
+			})
+
+		})
+
 	})
 
 })
