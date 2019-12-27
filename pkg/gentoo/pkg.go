@@ -167,13 +167,13 @@ func (p *GentooPackage) Admit(i *GentooPackage) (bool, error) {
 	}
 
 	if p.Version != "" {
-		v1, err = version.NewVersion(sanitizeVersion(p.Version))
+		v1, err = version.NewVersion(p.Version)
 		if err != nil {
 			return false, err
 		}
 	}
 	if i.Version != "" {
-		v2, err = version.NewVersion(sanitizeVersion(i.Version))
+		v2, err = version.NewVersion(i.Version)
 		if err != nil {
 			return false, err
 		}
