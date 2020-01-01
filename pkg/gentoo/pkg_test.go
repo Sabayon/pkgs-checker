@@ -1534,4 +1534,13 @@ var _ = Describe("Gentoo Packages", func() {
 
 	})
 
+	Context("Check Condition2Int", func() {
+		gp, err := ParsePackageStr(">=net-vpn-4.9/wireguard-0.0.1")
+		It("Check error", func() {
+			Expect(err).Should(BeNil())
+		})
+		It("Check Int", func() {
+			Expect(gp.Condition.Int()).Should(Equal(PkgCondGreaterEqual))
+		})
+	})
 })

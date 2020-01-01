@@ -100,6 +100,31 @@ func (p PackageCond) String() (ans string) {
 	return ans
 }
 
+func (p PackageCond) Int() (ans int) {
+	if p == PkgCondInvalid {
+		ans = PkgCondInvalid
+	} else if p == PkgCondGreater {
+		ans = PkgCondGreater
+	} else if p == PkgCondGreaterEqual {
+		ans = PkgCondGreaterEqual
+	} else if p == PkgCondLess {
+		ans = PkgCondLess
+	} else if p == PkgCondLessEqual {
+		ans = PkgCondLessEqual
+	} else if p == PkgCondEqual {
+		// To permit correct matching on database
+		// we currently use directly package version without =
+		ans = PkgCondEqual
+	} else if p == PkgCondNot {
+		ans = PkgCondNot
+	} else if p == PkgCondAnyRevision {
+		ans = PkgCondAnyRevision
+	} else if p == PkgCondMatchVersion {
+		ans = PkgCondMatchVersion
+	}
+	return
+}
+
 func sanitizeVersion(v string) string {
 	// https://devmanual.gentoo.org/ebuild-writing/file-format/index.html
 	ans := strings.ReplaceAll(v, "_alpha", "-alpha")
