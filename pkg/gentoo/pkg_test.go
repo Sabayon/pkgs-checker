@@ -46,6 +46,7 @@ var _ = Describe("Gentoo Packages", func() {
 				Slot:          "0=",
 				Version:       "5.2",
 				VersionSuffix: "-r5",
+				VersionBuild:  "",
 				Repository:    "",
 			}
 			fmt.Println(fmt.Sprintf("pkg %s", pkg))
@@ -83,6 +84,7 @@ var _ = Describe("Gentoo Packages", func() {
 				Slot:          "0*",
 				Version:       "5.2",
 				VersionSuffix: "-r5",
+				VersionBuild:  "",
 				Repository:    "",
 			}
 			fmt.Println(fmt.Sprintf("pkg %s", pkg))
@@ -120,6 +122,7 @@ var _ = Describe("Gentoo Packages", func() {
 				Slot:          "*",
 				Version:       "5.2",
 				VersionSuffix: "-r5",
+				VersionBuild:  "",
 				Repository:    "",
 			}
 			fmt.Println(fmt.Sprintf("pkg %s", pkg))
@@ -188,12 +191,13 @@ var _ = Describe("Gentoo Packages", func() {
 
 			pkg, err := ParsePackageStr("~sys-devel/gdb-7.3")
 			g := GentooPackage{
-				Name:       "gdb",
-				Category:   "sys-devel",
-				Condition:  PkgCondAnyRevision,
-				Version:    "7.3",
-				Slot:       "0",
-				Repository: "",
+				Name:         "gdb",
+				Category:     "sys-devel",
+				Condition:    PkgCondAnyRevision,
+				Version:      "7.3",
+				VersionBuild: "",
+				Slot:         "0",
+				Repository:   "",
 			}
 			fmt.Println(fmt.Sprintf("pkg %s", pkg))
 
@@ -224,12 +228,13 @@ var _ = Describe("Gentoo Packages", func() {
 
 			pkg, err := ParsePackageStr("=sys-devel/gdb-7.3*")
 			g := GentooPackage{
-				Name:       "gdb",
-				Category:   "sys-devel",
-				Condition:  PkgCondMatchVersion,
-				Version:    "7.3",
-				Slot:       "0",
-				Repository: "",
+				Name:         "gdb",
+				Category:     "sys-devel",
+				Condition:    PkgCondMatchVersion,
+				Version:      "7.3",
+				VersionBuild: "",
+				Slot:         "0",
+				Repository:   "",
 			}
 			fmt.Println(fmt.Sprintf("pkg %s", pkg))
 
@@ -820,6 +825,81 @@ var _ = Describe("Gentoo Packages", func() {
 			})
 		})
 
+		Context("Matches version with 4 numbers and build version", func() {
+
+			pkg, err := ParsePackageStr("=dev-db/database-release-manager-0.1.0.1+AB")
+			g := GentooPackage{
+				Name:          "database-release-manager",
+				Category:      "dev-db",
+				Condition:     PkgCondEqual,
+				Version:       "0.1.0.1",
+				Slot:          "0",
+				VersionSuffix: "",
+				VersionBuild:  "AB",
+				Repository:    "",
+			}
+			fmt.Println(fmt.Sprintf("pkg %s", pkg))
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check pkgName", func() {
+				Expect((*pkg).Name).Should(Equal("database-release-manager"))
+			})
+
+			It("Check category", func() {
+				Expect((*pkg).Category).Should(Equal("dev-db"))
+			})
+
+			It("Check cond", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg).Condition).Should(Equal(g.Condition))
+			})
+
+			It("Check struct", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg)).Should(Equal(g))
+			})
+		})
+
+		Context("Matches version with 3 numbers and build version with chars and number", func() {
+
+			pkg, err := ParsePackageStr("=dev-db/mysql-8.1.0+0.dev")
+			g := GentooPackage{
+				Name:          "mysql",
+				Category:      "dev-db",
+				Condition:     PkgCondEqual,
+				Version:       "8.1.0",
+				Slot:          "0",
+				VersionSuffix: "",
+				VersionBuild:  "0.dev",
+				Repository:    "",
+			}
+			fmt.Println(fmt.Sprintf("pkg %s", pkg))
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check pkgName", func() {
+				Expect((*pkg).Name).Should(Equal("mysql"))
+			})
+
+			It("Check category", func() {
+				Expect((*pkg).Category).Should(Equal("dev-db"))
+			})
+
+			It("Check cond", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg).Condition).Should(Equal(g.Condition))
+			})
+
+			It("Check struct", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg)).Should(Equal(g))
+			})
+		})
 		Context("Check Admit() example1", func() {
 
 			pkgA, err := ParsePackageStr("x11-libs/gtk+")

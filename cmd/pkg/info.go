@@ -54,6 +54,7 @@ $> pkgs-checker pkg info app/foo-3.30
 				fmt.Println("category:", gp.Category)
 				fmt.Println("version:", gp.Version)
 				fmt.Println("version_suffix:", gp.VersionSuffix)
+				fmt.Println("version_build:", gp.VersionBuild)
 				fmt.Println("slot:", gp.Slot)
 				fmt.Println("condition:", gp.Condition)
 				fmt.Println("repository:", gp.Repository)
