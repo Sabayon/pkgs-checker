@@ -863,6 +863,44 @@ var _ = Describe("Gentoo Packages", func() {
 			})
 		})
 
+		Context("Matches version with 2 numbers and build version", func() {
+
+			pkg, err := ParsePackageStr("=app-misc/c_rehash-1.7+r1")
+			g := GentooPackage{
+				Name:          "c_rehash",
+				Category:      "app-misc",
+				Condition:     PkgCondEqual,
+				Version:       "1.7",
+				Slot:          "0",
+				VersionSuffix: "",
+				VersionBuild:  "r1",
+				Repository:    "",
+			}
+			fmt.Println(fmt.Sprintf("pkg %s", pkg))
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check pkgName", func() {
+				Expect((*pkg).Name).Should(Equal("c_rehash"))
+			})
+
+			It("Check category", func() {
+				Expect((*pkg).Category).Should(Equal("app-misc"))
+			})
+
+			It("Check cond", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg).Condition).Should(Equal(g.Condition))
+			})
+
+			It("Check struct", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg)).Should(Equal(g))
+			})
+		})
+
 		Context("Matches version with 3 numbers and build version with chars and number", func() {
 
 			pkg, err := ParsePackageStr("=dev-db/mysql-8.1.0+0.dev")
