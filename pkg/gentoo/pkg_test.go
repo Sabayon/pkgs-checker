@@ -901,6 +901,44 @@ var _ = Describe("Gentoo Packages", func() {
 			})
 		})
 
+		Context("Matches version with dot and numbers on pkgname and build version", func() {
+
+			pkg, err := ParsePackageStr("=app-misc/geoclue-2.0-2.5.3+r2")
+			g := GentooPackage{
+				Name:          "geoclue-2.0",
+				Category:      "app-misc",
+				Condition:     PkgCondEqual,
+				Version:       "2.5.3",
+				Slot:          "0",
+				VersionSuffix: "",
+				VersionBuild:  "r2",
+				Repository:    "",
+			}
+			fmt.Println(fmt.Sprintf("pkg %s", pkg))
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check pkgName", func() {
+				Expect((*pkg).Name).Should(Equal("geoclue-2.0"))
+			})
+
+			It("Check category", func() {
+				Expect((*pkg).Category).Should(Equal("app-misc"))
+			})
+
+			It("Check cond", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg).Condition).Should(Equal(g.Condition))
+			})
+
+			It("Check struct", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg)).Should(Equal(g))
+			})
+		})
+
 		Context("Matches version with 3 numbers and build version with chars and number", func() {
 
 			pkg, err := ParsePackageStr("=dev-db/mysql-8.1.0+0.dev")
