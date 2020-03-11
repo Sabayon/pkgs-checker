@@ -939,6 +939,44 @@ var _ = Describe("Gentoo Packages", func() {
 			})
 		})
 
+		Context("Matches version with pkgname that start with upper chars and build version", func() {
+
+			pkg, err := ParsePackageStr("=dev-perl/WWW-RobotRules-6.20.0+r1")
+			g := GentooPackage{
+				Name:          "WWW-RobotRules",
+				Category:      "dev-perl",
+				Condition:     PkgCondEqual,
+				Version:       "6.20.0",
+				Slot:          "0",
+				VersionSuffix: "",
+				VersionBuild:  "r1",
+				Repository:    "",
+			}
+			fmt.Println(fmt.Sprintf("pkg %s", pkg))
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check pkgName", func() {
+				Expect((*pkg).Name).Should(Equal("WWW-RobotRules"))
+			})
+
+			It("Check category", func() {
+				Expect((*pkg).Category).Should(Equal("dev-perl"))
+			})
+
+			It("Check cond", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg).Condition).Should(Equal(g.Condition))
+			})
+
+			It("Check struct", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg)).Should(Equal(g))
+			})
+		})
+
 		Context("Matches version with 3 numbers and build version with chars and number", func() {
 
 			pkg, err := ParsePackageStr("=dev-db/mysql-8.1.0+0.dev")
