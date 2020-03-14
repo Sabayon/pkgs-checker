@@ -26,6 +26,7 @@ import (
 	"github.com/spf13/cobra"
 	settings "github.com/spf13/viper"
 
+	"github.com/Sabayon/pkgs-checker/cmd/entropy"
 	"github.com/Sabayon/pkgs-checker/cmd/pkg"
 	"github.com/Sabayon/pkgs-checker/cmd/pkglist"
 	"github.com/Sabayon/pkgs-checker/cmd/sark"
@@ -65,6 +66,7 @@ func init() {
 		pkg.NewPkgCommand(),
 		pkglist.NewPkglistCommand(),
 		sark.NewSarkCommand(),
+		entropy.NewEntropyCommand(),
 	)
 }
 
