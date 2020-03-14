@@ -69,6 +69,7 @@ type GentooPackage struct {
 	Condition     PackageCond
 	Repository    string   `json:"repository",omitempty"`
 	UseFlags      []string `json:"use_flags",omitempty"`
+	License       string   `json:"license",omitempty"`
 }
 
 func (p *GentooPackage) String() string {
