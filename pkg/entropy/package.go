@@ -57,11 +57,24 @@ AND d.idpackage = %d`, ans.Id)
 			return errors.New("Error on parse row for retrieve idpackage: " + err.Error())
 		}
 		idx := strings.Index(dep, "[")
+
+		if idx > 0 {
+			dep = dep[0:idx]
+		}
+
+		idx = strings.Index(dep, ";")
+		if idx > 0 {
+			dep = dep[0:idx]
+		}
+
+		// Drop slot. I will retrieve it later
+		idx = strings.Index(dep, ":")
 		if idx > 0 {
 			mdeps[dep[0:idx]] = true
 		} else {
 			mdeps[dep] = true
 		}
+
 	}
 
 	dArr := make([]string, 0)
@@ -102,7 +115,9 @@ ORDER BY version DESC LIMIT 1`, pkg.Name, pkg.Category)
 	var slot, license string
 	err = rows.Scan(&slot, &license)
 	if err != nil {
-		return errors.New("Error on parse row for dependency detail: " + err.Error())
+		return errors.New(
+			fmt.Sprintf("Error on parse row for dependency detail for pkg %s/%s: ",
+				pkg.Category, pkg.Name) + err.Error())
 	}
 	err = rows.Err()
 	if err != nil {
@@ -260,10 +275,8 @@ func RetrievePackageData(pkg *EntropyPackage, dbpath string) (*EntropyPackageDet
 
 	// Retrieve dependencies data
 	for _, d := range ans.Dependencies {
-		err = getPackageDepDetail(db, d)
-		if err != nil {
-			return nil, err
-		}
+		_ = getPackageDepDetail(db, d)
+		// Ignore error for package with missing slot
 	}
 
 	// Retrieve use flags of package
