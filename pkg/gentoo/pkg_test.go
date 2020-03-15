@@ -1030,6 +1030,119 @@ var _ = Describe("Gentoo Packages", func() {
 
 		})
 
+		Context("Parse dep 5", func() {
+
+			pkg, err := ParsePackageStr("app/A-1.0+1")
+			g := GentooPackage{
+				Name:          "A",
+				Category:      "app",
+				Condition:     PkgCondEqual,
+				Slot:          "0",
+				Version:       "1.0",
+				VersionSuffix: "",
+				VersionBuild:  "1",
+				Repository:    "",
+			}
+			fmt.Println(fmt.Sprintf("pkg %s", pkg))
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check pkgName", func() {
+				Expect((*pkg).Name).Should(Equal("A"))
+			})
+
+			It("Check category", func() {
+				Expect((*pkg).Category).Should(Equal("app"))
+			})
+
+			It("Check cond", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg).Condition).Should(Equal(g.Condition))
+			})
+
+			It("Check struct", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg)).Should(Equal(g))
+			})
+		})
+
+		Context("Parse dep 6", func() {
+
+			pkg, err := ParsePackageStr("app/A-1.0+pre20200315.1")
+			g := GentooPackage{
+				Name:          "A",
+				Category:      "app",
+				Condition:     PkgCondEqual,
+				Slot:          "0",
+				Version:       "1.0",
+				VersionSuffix: "",
+				VersionBuild:  "pre20200315.1",
+				Repository:    "",
+			}
+			fmt.Println(fmt.Sprintf("pkg %s", pkg))
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check pkgName", func() {
+				Expect((*pkg).Name).Should(Equal("A"))
+			})
+
+			It("Check category", func() {
+				Expect((*pkg).Category).Should(Equal("app"))
+			})
+
+			It("Check cond", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg).Condition).Should(Equal(g.Condition))
+			})
+
+			It("Check struct", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg)).Should(Equal(g))
+			})
+		})
+
+		Context("Parse dep 7", func() {
+
+			pkg, err := ParsePackageStr("app/A-1.0_pre20200315+d1.1")
+			g := GentooPackage{
+				Name:          "A",
+				Category:      "app",
+				Condition:     PkgCondEqual,
+				Slot:          "0",
+				Version:       "1.0",
+				VersionSuffix: "_pre20200315",
+				VersionBuild:  "d1.1",
+				Repository:    "",
+			}
+			fmt.Println(fmt.Sprintf("pkg %s", pkg))
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check pkgName", func() {
+				Expect((*pkg).Name).Should(Equal("A"))
+			})
+
+			It("Check category", func() {
+				Expect((*pkg).Category).Should(Equal("app"))
+			})
+
+			It("Check cond", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg).Condition).Should(Equal(g.Condition))
+			})
+
+			It("Check struct", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg)).Should(Equal(g))
+			})
+		})
 		Context("Check Admit() example2", func() {
 			var pkgA, pkgB *GentooPackage
 			var err error
@@ -1041,6 +1154,44 @@ var _ = Describe("Gentoo Packages", func() {
 				Expect(err).ShouldNot(BeNil())
 			})
 
+		})
+
+		Context("Parse dep 7", func() {
+
+			pkg, err := ParsePackageStr("app/A-1.0_pre20200315")
+			g := GentooPackage{
+				Name:          "A",
+				Category:      "app",
+				Condition:     PkgCondEqual,
+				Slot:          "0",
+				Version:       "1.0",
+				VersionSuffix: "_pre20200315",
+				VersionBuild:  "",
+				Repository:    "",
+			}
+			fmt.Println(fmt.Sprintf("pkg %s", pkg))
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check pkgName", func() {
+				Expect((*pkg).Name).Should(Equal("A"))
+			})
+
+			It("Check category", func() {
+				Expect((*pkg).Category).Should(Equal("app"))
+			})
+
+			It("Check cond", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg).Condition).Should(Equal(g.Condition))
+			})
+
+			It("Check struct", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg)).Should(Equal(g))
+			})
 		})
 
 		Context("Check Admit() example3", func() {
