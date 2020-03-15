@@ -78,10 +78,7 @@ AND d.idpackage = %d`, ans.Id)
 			dep = "=" + dep[2:] + "*"
 		}
 
-		fmt.Println("DEP ", dep)
-
 		mdeps[dep] = true
-
 	}
 
 	dArr := make([]string, 0)
