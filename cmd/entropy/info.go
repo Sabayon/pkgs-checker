@@ -25,6 +25,7 @@ import (
 	"github.com/spf13/cobra"
 
 	e "github.com/Sabayon/pkgs-checker/pkg/entropy"
+	gentoo "github.com/Sabayon/pkgs-checker/pkg/gentoo"
 )
 
 func newEntropyInfoCommand() *cobra.Command {
@@ -82,8 +83,12 @@ $> pkgs-checker entropy info app/foo-1
 				}
 				for _, dep := range detail.Dependencies {
 					if onlyDeps {
-						fmt.Printf("%s%s:%s\n", dep.Condition.String(),
-							dep.String(), dep.Slot)
+						if dep.Condition == gentoo.PkgCondMatchVersion {
+							fmt.Printf("=%s:%s*\n", dep.String(), dep.Slot)
+						} else {
+							fmt.Printf("%s%s:%s\n", dep.Condition.String(),
+								dep.String(), dep.Slot)
+						}
 					} else {
 						fmt.Println("\tname:", dep.Name)
 						fmt.Println("\tcategory:", dep.Category)

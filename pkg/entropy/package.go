@@ -70,10 +70,17 @@ AND d.idpackage = %d`, ans.Id)
 		// Drop slot. I will retrieve it later
 		idx = strings.Index(dep, ":")
 		if idx > 0 {
-			mdeps[dep[0:idx]] = true
-		} else {
-			mdeps[dep] = true
+			dep = dep[0:idx]
 		}
+
+		// Fix =* not complaint to gentoo syntax
+		if strings.HasPrefix(dep, "=*") {
+			dep = "=" + dep[2:] + "*"
+		}
+
+		fmt.Println("DEP ", dep)
+
+		mdeps[dep] = true
 
 	}
 
