@@ -21,6 +21,7 @@ package entropy
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -74,7 +75,7 @@ $> pkgs-checker entropy info app/foo-1
 				fmt.Println("version_build:", detail.Package.VersionBuild)
 				fmt.Println("slot:", detail.Package.Slot)
 				fmt.Println("condition:", detail.Package.Condition.String())
-				fmt.Println("uses:", detail.Package.UseFlags)
+				fmt.Println("uses:", strings.Join(detail.Package.UseFlags, " "))
 			}
 
 			if len(detail.Dependencies) > 0 {

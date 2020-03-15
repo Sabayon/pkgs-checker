@@ -56,13 +56,14 @@ AND d.idpackage = %d`, ans.Id)
 		if err != nil {
 			return errors.New("Error on parse row for retrieve idpackage: " + err.Error())
 		}
-		idx := strings.Index(dep, "[")
-
+		idx := strings.Index(dep, ";")
 		if idx > 0 {
-			dep = dep[0:idx]
+			conditions := strings.Split(dep, ";")
+			// Take last deps version to avoid use of major deps not availble in entropy
+			dep = conditions[len(conditions)-1]
 		}
 
-		idx = strings.Index(dep, ";")
+		idx = strings.Index(dep, "[")
 		if idx > 0 {
 			dep = dep[0:idx]
 		}
@@ -77,6 +78,9 @@ AND d.idpackage = %d`, ans.Id)
 		if strings.HasPrefix(dep, "=*") {
 			dep = "=" + dep[2:] + "*"
 		}
+
+		// Drop ?
+		dep = strings.ReplaceAll(dep, "?", "")
 
 		mdeps[dep] = true
 	}
@@ -103,6 +107,24 @@ AND d.idpackage = %d`, ans.Id)
 }
 
 func getPackageDepDetail(db *sql.DB, pkg *EntropyPackage) error {
+
+	if pkg.Version != "" {
+
+		// Try to retrieve data with atom
+
+		tmpD := &EntropyPackageDetail{
+			Package:      *pkg,
+			Dependencies: make([]*EntropyPackage, 0),
+		}
+
+		err := getPackageDataByAtom(db, tmpD)
+		if err == nil {
+			pkg.License = tmpD.Package.License
+			pkg.Slot = tmpD.Package.Slot
+			return nil
+		}
+
+	}
 
 	getDepData := fmt.Sprintf(`SELECT slot,license
 FROM baseinfo
