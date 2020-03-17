@@ -76,6 +76,7 @@ $> pkgs-checker entropy info app/foo-1
 				fmt.Println("slot:", detail.Package.Slot)
 				fmt.Println("condition:", detail.Package.Condition.String())
 				fmt.Println("uses:", strings.Join(detail.Package.UseFlags, " "))
+				fmt.Println("license:", detail.Package.License)
 			}
 
 			if len(detail.Dependencies) > 0 {
