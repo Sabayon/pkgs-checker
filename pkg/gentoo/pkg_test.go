@@ -1270,6 +1270,44 @@ var _ = Describe("Gentoo Packages", func() {
 			})
 		})
 
+		Context("Parse dep 11", func() {
+
+			pkg, err := ParsePackageStr(">=dev-libs/libsigc++-2-2.3.2+1")
+			g := GentooPackage{
+				Name:          "libsigc++-2",
+				Category:      "dev-libs",
+				Condition:     PkgCondGreaterEqual,
+				Slot:          "0",
+				Version:       "2.3.2",
+				VersionSuffix: "",
+				VersionBuild:  "1",
+				Repository:    "",
+			}
+			fmt.Println(fmt.Sprintf("pkg %s", pkg))
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check pkgName", func() {
+				Expect((*pkg).Name).Should(Equal("libsigc++-2"))
+			})
+
+			It("Check category", func() {
+				Expect((*pkg).Category).Should(Equal("dev-libs"))
+			})
+
+			It("Check cond", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg).Condition).Should(Equal(g.Condition))
+			})
+
+			It("Check struct", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg)).Should(Equal(g))
+			})
+		})
+
 		Context("Check Admit() example3", func() {
 			var pkgA, pkgB *GentooPackage
 			var err error
