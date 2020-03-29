@@ -1156,7 +1156,7 @@ var _ = Describe("Gentoo Packages", func() {
 
 		})
 
-		Context("Parse dep 7", func() {
+		Context("Parse dep 8", func() {
 
 			pkg, err := ParsePackageStr("app/A-1.0_pre20200315")
 			g := GentooPackage{
@@ -1181,6 +1181,82 @@ var _ = Describe("Gentoo Packages", func() {
 
 			It("Check category", func() {
 				Expect((*pkg).Category).Should(Equal("app"))
+			})
+
+			It("Check cond", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg).Condition).Should(Equal(g.Condition))
+			})
+
+			It("Check struct", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg)).Should(Equal(g))
+			})
+		})
+
+		Context("Parse dep 9", func() {
+
+			pkg, err := ParsePackageStr(">=dev-libs/libsigc++-2-2.3.2")
+			g := GentooPackage{
+				Name:          "libsigc++-2",
+				Category:      "dev-libs",
+				Condition:     PkgCondGreaterEqual,
+				Slot:          "0",
+				Version:       "2.3.2",
+				VersionSuffix: "",
+				VersionBuild:  "",
+				Repository:    "",
+			}
+			fmt.Println(fmt.Sprintf("pkg %s", pkg))
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check pkgName", func() {
+				Expect((*pkg).Name).Should(Equal("libsigc++-2"))
+			})
+
+			It("Check category", func() {
+				Expect((*pkg).Category).Should(Equal("dev-libs"))
+			})
+
+			It("Check cond", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg).Condition).Should(Equal(g.Condition))
+			})
+
+			It("Check struct", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg)).Should(Equal(g))
+			})
+		})
+
+		Context("Parse dep 10", func() {
+
+			pkg, err := ParsePackageStr(">=media-libs/libsndfile-1.0.29+pre2_p20191024.1")
+			g := GentooPackage{
+				Name:          "libsndfile",
+				Category:      "media-libs",
+				Condition:     PkgCondGreaterEqual,
+				Slot:          "0",
+				Version:       "1.0.29",
+				VersionSuffix: "",
+				VersionBuild:  "pre2_p20191024.1",
+				Repository:    "",
+			}
+			fmt.Println(fmt.Sprintf("pkg %s", pkg))
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check pkgName", func() {
+				Expect((*pkg).Name).Should(Equal("libsndfile"))
+			})
+
+			It("Check category", func() {
+				Expect((*pkg).Category).Should(Equal("media-libs"))
 			})
 
 			It("Check cond", func() {
