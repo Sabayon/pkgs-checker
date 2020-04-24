@@ -28,7 +28,7 @@ import (
 
 type EntropyPackage struct {
 	*gentoo.GentooPackage
-	Revision int
+	Revision int `json:"revision",omitempty`
 }
 
 func EntropyIsPkgWithRevision(pkgname string) (ans bool) {

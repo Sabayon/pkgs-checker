@@ -310,3 +310,49 @@ func RetrievePackageData(pkg *EntropyPackage, dbpath string) (*EntropyPackageDet
 
 	return ans, nil
 }
+
+func RetrieveRepoPackages(dbpath string) ([]*EntropyPackage, error) {
+	ans := []*EntropyPackage{}
+
+	// Open the connection
+	db, err := sql.Open("sqlite3", dbpath)
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	db.SetMaxOpenConns(1)
+
+	listDbPkgQuery := `
+SELECT atom,slot
+FROM baseinfo`
+
+	rows, err := db.Query(listDbPkgQuery)
+	if err != nil {
+		return ans, errors.New("Error on retrieve pkg list: " + err.Error())
+	}
+	defer rows.Close()
+
+	var atom, slot string
+	for rows.Next() {
+		err = rows.Scan(&atom, &slot)
+		if err != nil {
+			return ans, errors.New("Error on parse row for retrieve data: " + err.Error())
+		}
+
+		pkg, err := NewEntropyPackage(atom)
+		if err != nil {
+			return ans, errors.New("Error on parse atom " + atom + ": " + err.Error())
+		}
+		pkg.Slot = slot
+
+		ans = append(ans, pkg)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return ans, errors.New("Error on parse row for retrieve data: " + err.Error())
+	}
+
+	return ans, nil
+}

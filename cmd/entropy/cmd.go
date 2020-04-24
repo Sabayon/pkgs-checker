@@ -31,6 +31,7 @@ func NewEntropyCommand() *cobra.Command {
 
 	cmd.AddCommand(
 		newEntropyInfoCommand(),
+		newEntropyListCommand(),
 	)
 
 	return cmd
