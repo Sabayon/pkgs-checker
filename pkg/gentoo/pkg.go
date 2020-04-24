@@ -60,16 +60,16 @@ const (
 )
 
 type GentooPackage struct {
-	Name          string `json:"name",omitempty"`
-	Category      string `json:"category",omitempty"`
-	Version       string `json:"version",omitempty"`
-	VersionSuffix string `json:"version_suffix",omitempty"`
-	VersionBuild  string `json:"version_build",omitempty"`
-	Slot          string `json:"slot",omitempty"`
+	Name          string `json:"name,omitempty"`
+	Category      string `json:"category,omitempty"`
+	Version       string `json:"version,omitempty"`
+	VersionSuffix string `json:"version_suffix,omitempty"`
+	VersionBuild  string `json:"version_build,omitempty"`
+	Slot          string `json:"slot,omitempty"`
 	Condition     PackageCond
-	Repository    string   `json:"repository",omitempty"`
-	UseFlags      []string `json:"use_flags",omitempty"`
-	License       string   `json:"license",omitempty"`
+	Repository    string   `json:"repository,omitempty"`
+	UseFlags      []string `json:"use_flags,omitempty"`
+	License       string   `json:"license,omitempty"`
 }
 
 func (p *GentooPackage) String() string {
