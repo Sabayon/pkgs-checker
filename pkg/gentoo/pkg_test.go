@@ -1852,6 +1852,24 @@ var _ = Describe("Gentoo Packages", func() {
 			})
 		})
 
+		Context("GetPackageName6", func() {
+			gp, err := ParsePackageStr("kernel-5.4/sabayon-full-5.4+1")
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check package name", func() {
+				Expect(gp.GetPackageName()).Should(Equal("kernel-5.4/sabayon-full"))
+			})
+
+			It("Check package version", func() {
+				Expect(gp.Version).Should(Equal("5.4"))
+			})
+
+			It("Check package version suffix", func() {
+				Expect(gp.VersionBuild).Should(Equal("1"))
+			})
+		})
 		Context("PkgWithUseFlags", func() {
 			gp, err := ParsePackageStr("dev-util/mottainai-agent-0.0_pre20191012[lxd]")
 			It("Check error", func() {

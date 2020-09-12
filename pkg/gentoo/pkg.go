@@ -56,7 +56,9 @@ const (
 
 const (
 	RegexCatString     = `(^[a-z]+[0-9]*[a-z]*[-]*[a-z]+[0-9]*[a-z]*|^virtual)`
-	RegexPkgNameString = `([a-zA-Z]*[0-9a-zA-Z\.\-_]*[a-zA-Z0-9]+|[a-zA-Z\-]+[+]+[-]+[0-9a-zA-Z\.]*|[a-zA-Z\-]+[+]+)`
+	RegexPkgNameString = `([a-zA-Z]*[0-9a-zA-Z\.\-_]*[a-zA-Z0-9]+|[a-zA-Z\-]+[+]+[-]+|[a-zA-Z\-]+[+]+)`
+	//RegexPkgNameString = `([a-zA-Z]*[0-9a-zA-Z\.\-_]*[a-zA-Z0-9]+|[a-zA-Z\-]+[+]+[-]+[0-9a-zA-Z\.]*|[a-zA-Z\-]+[+]+)`
+
 )
 
 type GentooPackage struct {
@@ -358,15 +360,33 @@ func ParsePackageStr(pkg string) (*GentooPackage, error) {
 		"_beta",
 	)
 
+	words := strings.Split(pkg, "/")
+	if len(words) != 2 {
+		return nil, errors.New(fmt.Sprintf("Invalid package string %s", pkg))
+	}
+	ans.Category = words[0]
+	pkgname := words[1]
+
+	// Validate category
+
+	regexPkg := regexp.MustCompile(
+		fmt.Sprintf("%s$", RegexCatString),
+	)
+
+	matches := regexPkg.FindAllString(ans.Category, -1)
+	if len(matches) > 1 {
+		return nil, errors.New(fmt.Sprintf("Invalid category %s", ans.Category))
+	}
+
 	hasBuild, _ := regexp.MatchString(
-		fmt.Sprintf("(%s[/]%s%s([[:]{1,2}[0-9a-zA-Z]*]*)*[+])",
-			RegexCatString, RegexPkgNameString, regexVerString),
-		pkg,
+		fmt.Sprintf("(%s%s([[:]{1,2}[0-9a-zA-Z]*]*)*[+])",
+			RegexPkgNameString, regexVerString),
+		pkgname,
 	)
 
 	if hasBuild {
 		// Check if build number is present
-		buildIdx := strings.LastIndex(pkg, "+")
+		buildIdx := strings.LastIndex(pkgname, "+")
 		if buildIdx > 0 {
 			// <pre-release> ::= <dot-separated pre-release identifiers>
 			//
@@ -389,17 +409,10 @@ func ParsePackageStr(pkg string) (*GentooPackage, error) {
 			//      | <non-digit> <identifier characters>
 			//      | <identifier characters> <non-digit>
 			//      | <identifier characters> <non-digit> <identifier characters>
-			ans.VersionBuild = pkg[buildIdx+1:]
-			pkg = pkg[0:buildIdx]
+			ans.VersionBuild = pkgname[buildIdx+1:]
+			pkgname = pkgname[0:buildIdx]
 		}
 	}
-
-	words := strings.Split(pkg, "/")
-	if len(words) != 2 {
-		return nil, errors.New(fmt.Sprintf("Invalid package string %s", pkg))
-	}
-	ans.Category = words[0]
-	pkgname := words[1]
 
 	// Check if has repository
 	if strings.Contains(pkgname, "::") {
@@ -415,11 +428,11 @@ func ParsePackageStr(pkg string) (*GentooPackage, error) {
 		pkgname = words[0]
 	}
 
-	regexPkg := regexp.MustCompile(
+	regexPkg = regexp.MustCompile(
 		fmt.Sprintf("%s$", regexVerString),
 	)
 
-	matches := regexPkg.FindAllString(pkgname, -1)
+	matches = regexPkg.FindAllString(pkgname, -1)
 
 	// NOTE: Now suffix comples like _alpha_rc1 are not supported.
 
