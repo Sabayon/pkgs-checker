@@ -19,6 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package entropy
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -48,6 +49,7 @@ $> pkgs-checker entropy info app/foo-1
 
 			pkgname := args[0]
 
+			jsonOut, _ := cmd.Flags().GetBool("json")
 			onlyDeps, _ := cmd.Flags().GetBool("onlydeps")
 			dbPath, _ := cmd.Flags().GetString("entropy-db")
 			if dbPath == "" {
@@ -67,50 +69,64 @@ $> pkgs-checker entropy info app/foo-1
 				os.Exit(1)
 			}
 
-			if !onlyDeps {
-				fmt.Println("name:", detail.Package.Name)
-				fmt.Println("category:", detail.Package.Category)
-				fmt.Println("version:", detail.Package.Version)
-				fmt.Println("version_suffix:", detail.Package.VersionSuffix)
-				fmt.Println("version_build:", detail.Package.VersionBuild)
-				fmt.Println("slot:", detail.Package.Slot)
-				fmt.Println("condition:", detail.Package.Condition.String())
-				fmt.Println("uses:", strings.Join(detail.Package.UseFlags, " "))
-				fmt.Println("license:", detail.Package.License)
-			}
+			if jsonOut {
 
-			if len(detail.Dependencies) > 0 {
-				if !onlyDeps {
-					fmt.Println("\nDependencies:\n")
+				out, err := json.Marshal(detail)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
 				}
-				for _, dep := range detail.Dependencies {
-					if onlyDeps {
-						if dep.Condition == gentoo.PkgCondMatchVersion {
-							fmt.Printf("=%s:%s*\n", dep.String(), dep.Slot)
+
+				fmt.Println(string(out))
+
+			} else {
+
+				if !onlyDeps {
+					fmt.Println("name:", detail.Package.Name)
+					fmt.Println("category:", detail.Package.Category)
+					fmt.Println("version:", detail.Package.Version)
+					fmt.Println("version_suffix:", detail.Package.VersionSuffix)
+					fmt.Println("version_build:", detail.Package.VersionBuild)
+					fmt.Println("slot:", detail.Package.Slot)
+					fmt.Println("condition:", detail.Package.Condition.String())
+					fmt.Println("uses:", strings.Join(detail.Package.UseFlags, " "))
+					fmt.Println("license:", detail.Package.License)
+				}
+
+				if len(detail.Dependencies) > 0 {
+					if !onlyDeps {
+						fmt.Println("\nDependencies:\n")
+					}
+					for _, dep := range detail.Dependencies {
+						if onlyDeps {
+							if dep.Condition == gentoo.PkgCondMatchVersion {
+								fmt.Printf("=%s:%s*\n", dep.String(), dep.Slot)
+							} else {
+								fmt.Printf("%s%s:%s\n", dep.Condition.String(),
+									dep.String(), dep.Slot)
+							}
 						} else {
-							fmt.Printf("%s%s:%s\n", dep.Condition.String(),
-								dep.String(), dep.Slot)
+							fmt.Println("\tname:", dep.Name)
+							fmt.Println("\tcategory:", dep.Category)
+							fmt.Println("\tversion:", dep.Version)
+							fmt.Println("\tversion_suffix:", dep.VersionSuffix)
+							fmt.Println("\tslot:", dep.Slot)
+							fmt.Println("\tcondition:", dep.Condition.String())
+							fmt.Println("")
 						}
-					} else {
-						fmt.Println("\tname:", dep.Name)
-						fmt.Println("\tcategory:", dep.Category)
-						fmt.Println("\tversion:", dep.Version)
-						fmt.Println("\tversion_suffix:", dep.VersionSuffix)
-						fmt.Println("\tslot:", dep.Slot)
-						fmt.Println("\tcondition:", dep.Condition.String())
-						fmt.Println("")
 					}
 				}
-			}
 
-			if len(detail.Files) > 0 {
+				if len(detail.Files) > 0 {
 
-				if !onlyDeps {
-					fmt.Println("\nFiles:\n")
+					if !onlyDeps {
+						fmt.Println("\nFiles:\n")
 
-					for _, f := range detail.Files {
-						fmt.Println(fmt.Sprintf("\t%s", f))
+						for _, f := range detail.Files {
+							fmt.Println(fmt.Sprintf("\t%s", f))
+						}
 					}
+
 				}
 
 			}
@@ -120,6 +136,7 @@ $> pkgs-checker entropy info app/foo-1
 
 	cmd.Flags().StringP("entropy-db", "d", "", "Path of the entropy database")
 	cmd.Flags().Bool("onlydeps", false, "Print only deps in quiet mode.")
+	cmd.Flags().BoolP("json", "j", false, "Enable json output on stdout.")
 
 	return cmd
 }

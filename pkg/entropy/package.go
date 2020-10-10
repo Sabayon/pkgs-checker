@@ -29,10 +29,10 @@ import (
 )
 
 type EntropyPackageDetail struct {
-	Id           int
-	Package      EntropyPackage
-	Dependencies []*EntropyPackage
-	Files        []string
+	Id           int               `json:"id,omitempty"`
+	Package      EntropyPackage    `json:"package"`
+	Dependencies []*EntropyPackage `json:"dependencies"`
+	Files        []string          `json:"files,omitempty"`
 }
 
 func retrievePackageFiles(db *sql.DB, ans *EntropyPackageDetail) error {
