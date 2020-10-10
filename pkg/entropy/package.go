@@ -32,6 +32,39 @@ type EntropyPackageDetail struct {
 	Id           int
 	Package      EntropyPackage
 	Dependencies []*EntropyPackage
+	Files        []string
+}
+
+func retrievePackageFiles(db *sql.DB, ans *EntropyPackageDetail) error {
+	// Retrieve the list
+
+	getFiles := fmt.Sprintf(`
+SELECT file
+FROM content
+WHERE idpackage = %d`, ans.Id)
+
+	rows, err := db.Query(getFiles)
+	if err != nil {
+		return errors.New("Error on retrieve dependencies: " + err.Error())
+	}
+	defer rows.Close()
+
+	var file string
+	for rows.Next() {
+		err = rows.Scan(&file)
+		if err != nil {
+			return errors.New("Error on parse row for retrieve files: " + err.Error())
+		}
+
+		ans.Files = append(ans.Files, file)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return errors.New("Error on parse row for retrieve idpackage: " + err.Error())
+	}
+
+	return nil
 }
 
 func retrievePackageDependencies(db *sql.DB, ans *EntropyPackageDetail) error {
@@ -303,6 +336,12 @@ func RetrievePackageData(pkg *EntropyPackage, dbpath string) (*EntropyPackageDet
 	for _, d := range ans.Dependencies {
 		_ = getPackageDepDetail(db, d)
 		// Ignore error for package with missing slot
+	}
+
+	// Retrieve file list
+	err = retrievePackageFiles(db, ans)
+	if err != nil {
+		return nil, err
 	}
 
 	// Retrieve use flags of package

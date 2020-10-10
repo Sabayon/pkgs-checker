@@ -103,6 +103,18 @@ $> pkgs-checker entropy info app/foo-1
 				}
 			}
 
+			if len(detail.Files) > 0 {
+
+				if !onlyDeps {
+					fmt.Println("\nFiles:\n")
+
+					for _, f := range detail.Files {
+						fmt.Println(fmt.Sprintf("\t%s", f))
+					}
+				}
+
+			}
+
 		},
 	}
 
