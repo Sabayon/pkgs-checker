@@ -9,7 +9,7 @@ all: pkgs-checker
 
 .PHONY: pkgs-checker
 pkgs-checker:
-	go build -v .
+	CGO_ENABLE=0 go build -v .
 
 .PHONY: test
 test:
@@ -34,4 +34,4 @@ deps:
 
 .PHONY: multiarch-build-dev
 multiarch-build-dev: deps
-	gox $(BUILD_PLATFORMS) -output="release/$(NAME)-$(REVISION)-{{.OS}}-{{.Arch}}" -ldflags "-extldflags=-Wl,--allow-multiple-definition"
+	CGO_ENABLE=0 gox $(BUILD_PLATFORMS) -output="release/$(NAME)-$(REVISION)-{{.OS}}-{{.Arch}}" -ldflags "-extldflags=-Wl,--allow-multiple-definition"
