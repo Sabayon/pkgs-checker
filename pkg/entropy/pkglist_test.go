@@ -80,4 +80,32 @@ var _ = Describe("Entropy Pkglist", func() {
 
 	})
 
+	Describe("Parse String3 without revision", func() {
+
+		ep, err := NewEntropyPackage("app-emulation/virtualbox-modules-6.1.12-r1#5.6.0-sabayon")
+
+		Context("Check processing phase", func() {
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check element", func() {
+				Expect(ep).Should(Equal(&EntropyPackage{
+					GentooPackage: &GentooPackage{
+						Category:      "app-emulation",
+						Name:          "virtualbox-modules",
+						Version:       "6.1.12",
+						VersionSuffix: "-r1",
+						Slot:          "0",
+						Condition:     PkgCondEqual,
+					},
+					Revision:           0,
+					KernelModuleSuffix: "5.6.0-sabayon",
+				}))
+			})
+
+		})
+
+	})
+
 })

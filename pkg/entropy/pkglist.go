@@ -22,13 +22,15 @@ import (
 	"errors"
 	"regexp"
 	"strconv"
+	"strings"
 
 	gentoo "github.com/Sabayon/pkgs-checker/pkg/gentoo"
 )
 
 type EntropyPackage struct {
 	*gentoo.GentooPackage
-	Revision int `json:"revision",omitempty`
+	Revision           int    `json:"revision,omitempty"`
+	KernelModuleSuffix string `json:"kernel_module,omitempty"`
 }
 
 func EntropyIsPkgWithRevision(pkgname string) (ans bool) {
@@ -50,6 +52,7 @@ func EntropyIsPkgWithRevision(pkgname string) (ans bool) {
 
 func NewEntropyPackage(pkgname string) (*EntropyPackage, error) {
 	var ans *EntropyPackage
+	var kernelVersion = ""
 
 	if pkgname == "" {
 		return nil, errors.New("Invalid pkgname")
@@ -63,6 +66,13 @@ func NewEntropyPackage(pkgname string) (*EntropyPackage, error) {
 	if len(matches) > 0 {
 		gPkgname := pkgname[:len(pkgname)-len(matches[0])]
 
+		// PRE: The # char is not used in Gentoo.
+		if strings.Contains(gPkgname, "#") {
+			idx := strings.Index(gPkgname, "#")
+			kernelVersion = gPkgname[idx+1:]
+			gPkgname = gPkgname[0:idx]
+		}
+
 		gp, err := gentoo.ParsePackageStr(gPkgname)
 		if err != nil {
 			return nil, err
@@ -73,17 +83,27 @@ func NewEntropyPackage(pkgname string) (*EntropyPackage, error) {
 			return nil, err
 		}
 		ans = &EntropyPackage{
-			GentooPackage: gp,
-			Revision:      rev,
+			GentooPackage:      gp,
+			Revision:           rev,
+			KernelModuleSuffix: kernelVersion,
 		}
 	} else {
+
+		// PRE: The # char is not used in Gentoo.
+		if strings.Contains(pkgname, "#") {
+			idx := strings.Index(pkgname, "#")
+			kernelVersion = pkgname[idx+1:]
+			pkgname = pkgname[0:idx]
+		}
+
 		gp, err := gentoo.ParsePackageStr(pkgname)
 		if err != nil {
 			return nil, err
 		}
 		ans = &EntropyPackage{
-			GentooPackage: gp,
-			Revision:      0,
+			GentooPackage:      gp,
+			Revision:           0,
+			KernelModuleSuffix: kernelVersion,
 		}
 	}
 

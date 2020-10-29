@@ -9,7 +9,8 @@ all: pkgs-checker
 
 .PHONY: pkgs-checker
 pkgs-checker:
-	CGO_ENABLE=0 go build -v .
+	# pkgs-checker uses go-sqlite3 that require CGO
+	CGO_ENABLED=1 go build -v .
 
 .PHONY: test
 test:
@@ -34,4 +35,4 @@ deps:
 
 .PHONY: multiarch-build-dev
 multiarch-build-dev: deps
-	CGO_ENABLE=0 gox $(BUILD_PLATFORMS) -output="release/$(NAME)-$(REVISION)-{{.OS}}-{{.Arch}}" -ldflags "-extldflags=-Wl,--allow-multiple-definition"
+	CGO_ENABLED=1 gox $(BUILD_PLATFORMS) -output="release/$(NAME)-$(REVISION)-{{.OS}}-{{.Arch}}" -ldflags "-extldflags=-Wl,--allow-multiple-definition"

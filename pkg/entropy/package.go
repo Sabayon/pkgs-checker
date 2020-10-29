@@ -115,6 +115,11 @@ AND d.idpackage = %d`, ans.Id)
 		// Drop ?
 		dep = strings.ReplaceAll(dep, "?", "")
 
+		// Drop ~
+		if strings.Index(dep, "~") > 0 {
+			dep = dep[:strings.Index(dep, "~")]
+		}
+
 		mdeps[dep] = true
 	}
 
@@ -225,12 +230,21 @@ AND u.idpackage = %d`, id)
 func getPackageDataByAtom(db *sql.DB, ans *EntropyPackageDetail) error {
 
 	var idPackage int
-	var name, version, slot, license string
+	var name, version, slot, license, atom string
+
+	if ans.Package.KernelModuleSuffix == "" {
+		atom = fmt.Sprintf("%s/%s-%s", ans.Package.Category, ans.Package.Name,
+			fmt.Sprintf("%s%s", ans.Package.Version, ans.Package.VersionSuffix))
+	} else {
+		atom = fmt.Sprintf("%s/%s-%s#%s", ans.Package.Category, ans.Package.Name,
+			fmt.Sprintf("%s%s", ans.Package.Version, ans.Package.VersionSuffix),
+			ans.Package.KernelModuleSuffix)
+	}
+
 	// Retrieve id package of the selected package as atom
 	getIdPackageByAtom := fmt.Sprintf(
-		"SELECT idpackage,name,version,slot,license FROM baseinfo WHERE atom = '%s/%s-%s'",
-		ans.Package.Category, ans.Package.Name,
-		fmt.Sprintf("%s%s", ans.Package.Version, ans.Package.VersionSuffix),
+		"SELECT idpackage,name,version,slot,license FROM baseinfo WHERE atom = '%s'",
+		atom,
 	)
 
 	rows, err := db.Query(getIdPackageByAtom)
