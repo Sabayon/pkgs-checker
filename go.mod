@@ -1,10 +1,9 @@
-module pkgs-checker
+module github.com/Sabayon/pkgs-checker
 
 go 1.15
 
 require (
 	github.com/MottainaiCI/simplestreams-builder v0.1.0
-	github.com/Sabayon/pkgs-checker v0.7.2
 	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/hashicorp/go-version v1.2.1
 	github.com/mattn/go-sqlite3 v1.14.4

@@ -17,8 +17,6 @@ github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym
 github.com/MottainaiCI/simplestreams-builder v0.1.0 h1:A8KJN22Xkx7NUKC9/zWmd1UhIqRn3bdHo0wv/HsAHx8=
 github.com/MottainaiCI/simplestreams-builder v0.1.0/go.mod h1:+Gbv6dg6TPHWq4oDjZY1vn978PLCEZ2hOu8kvn+S7t4=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
-github.com/Sabayon/pkgs-checker v0.7.2 h1:mh53u5D7FTCeBJevYQA9cCxAWGTSuKqw7m/x7GsQVb0=
-github.com/Sabayon/pkgs-checker v0.7.2/go.mod h1:GFGM6ZzSE5owdGgjLnulj0+Vt9UTd5LFGmB2AOVPYrE=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e/go.mod h1:3U/XgcO3hCbHZ8TKRvWD2dDTCfh9M9ya+I9JpbB7O8o=

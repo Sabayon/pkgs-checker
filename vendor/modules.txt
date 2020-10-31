@@ -1,21 +1,6 @@
 # github.com/MottainaiCI/simplestreams-builder v0.1.0
 ## explicit
 github.com/MottainaiCI/simplestreams-builder/pkg/tools
-# github.com/Sabayon/pkgs-checker v0.7.2
-## explicit
-github.com/Sabayon/pkgs-checker/cmd
-github.com/Sabayon/pkgs-checker/cmd/entropy
-github.com/Sabayon/pkgs-checker/cmd/pkg
-github.com/Sabayon/pkgs-checker/cmd/pkglist
-github.com/Sabayon/pkgs-checker/cmd/sark
-github.com/Sabayon/pkgs-checker/pkg/binhostdir
-github.com/Sabayon/pkgs-checker/pkg/commons
-github.com/Sabayon/pkgs-checker/pkg/entropy
-github.com/Sabayon/pkgs-checker/pkg/filter
-github.com/Sabayon/pkgs-checker/pkg/gentoo
-github.com/Sabayon/pkgs-checker/pkg/hash
-github.com/Sabayon/pkgs-checker/pkg/pkglist
-github.com/Sabayon/pkgs-checker/pkg/sark
 # github.com/fsnotify/fsnotify v1.4.9
 github.com/fsnotify/fsnotify
 # github.com/go-yaml/yaml v2.1.0+incompatible
