@@ -19,6 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package pkg
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -26,6 +27,10 @@ import (
 
 	"github.com/Sabayon/pkgs-checker/pkg/gentoo"
 )
+
+type PkgInfoReport struct {
+	Packages []gentoo.GentooPackage `json:"packages,omitempty"`
+}
 
 func newPkgInfoCommand() *cobra.Command {
 	var cmd = &cobra.Command{
@@ -42,6 +47,9 @@ $> pkgs-checker pkg info app/foo-3.30
 			}
 		},
 		Run: func(cmd *cobra.Command, args []string) {
+			jsonOut, _ := cmd.Flags().GetBool("json")
+
+			pkgs := []gentoo.GentooPackage{}
 
 			for _, pkg := range args {
 				gp, err := gentoo.ParsePackageStr(pkg)
@@ -50,18 +58,54 @@ $> pkgs-checker pkg info app/foo-3.30
 					os.Exit(1)
 				}
 
-				fmt.Println("name:", gp.Name)
-				fmt.Println("category:", gp.Category)
-				fmt.Println("version:", gp.Version)
-				fmt.Println("version_suffix:", gp.VersionSuffix)
-				fmt.Println("version_build:", gp.VersionBuild)
-				fmt.Println("slot:", gp.Slot)
-				fmt.Println("condition:", gp.Condition)
-				fmt.Println("repository:", gp.Repository)
-				fmt.Println("uses:", gp.UseFlags)
+				pkgs = append(pkgs, *gp)
+
+			}
+
+			if len(pkgs) == 0 {
+				os.Exit(0)
+			}
+
+			if jsonOut {
+
+				var err error
+				var out []byte
+
+				if len(pkgs) > 1 {
+					preport := PkgInfoReport{
+						Packages: pkgs,
+					}
+
+					out, err = json.Marshal(preport)
+				} else {
+					out, err = json.Marshal(pkgs[0])
+				}
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+
+				fmt.Println(string(out))
+
+			} else {
+
+				for _, gp := range pkgs {
+					fmt.Println("name:", gp.Name)
+					fmt.Println("category:", gp.Category)
+					fmt.Println("version:", gp.Version)
+					fmt.Println("version_suffix:", gp.VersionSuffix)
+					fmt.Println("version_build:", gp.VersionBuild)
+					fmt.Println("slot:", gp.Slot)
+					fmt.Println("condition:", gp.Condition)
+					fmt.Println("repository:", gp.Repository)
+					fmt.Println("uses:", gp.UseFlags)
+				}
+
 			}
 		},
 	}
+
+	cmd.Flags().BoolP("json", "j", false, "Enable json output on stdout.")
 
 	return cmd
 }
