@@ -1384,6 +1384,47 @@ var _ = Describe("Gentoo Packages", func() {
 			})
 		})
 
+		Context("Parse dep with use flags", func() {
+
+			pkg, err := ParsePackageStr(">=dev-libs/dbus-9.9.9[use1,use2,use3(+)]")
+			g := GentooPackage{
+				Name:          "dbus",
+				Category:      "dev-libs",
+				Condition:     PkgCondGreaterEqual,
+				Slot:          "0",
+				Version:       "9.9.9",
+				VersionSuffix: "",
+				VersionBuild:  "",
+				Repository:    "",
+				UseFlags: []string{
+					"use1", "use2", "use3(+)",
+				},
+			}
+			fmt.Println(fmt.Sprintf("pkg %s", pkg))
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check pkgName", func() {
+				Expect((*pkg).Name).Should(Equal("dbus"))
+			})
+
+			It("Check category", func() {
+				Expect((*pkg).Category).Should(Equal("dev-libs"))
+			})
+
+			It("Check cond", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg).Condition).Should(Equal(g.Condition))
+			})
+
+			It("Check struct", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg)).Should(Equal(g))
+			})
+		})
+
 		Context("Check Admit() example3", func() {
 			var pkgA, pkgB *GentooPackage
 			var err error

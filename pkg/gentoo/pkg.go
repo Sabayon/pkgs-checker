@@ -412,6 +412,17 @@ func ParsePackageStr(pkg string) (*GentooPackage, error) {
 		}
 	}
 
+	// Check if there are use flags annotation
+	if strings.Index(pkgname, "[") > 0 {
+		useFlags := pkgname[strings.Index(pkgname, "[")+1 : strings.Index(pkgname, "]")]
+		ans.UseFlags = strings.Split(useFlags, ",")
+		p := pkgname[0:strings.Index(pkgname, "[")]
+		if strings.Index(pkgname, "]") < len(pkgname) {
+			p = p + pkgname[strings.Index(pkgname, "]")+1:len(pkgname)]
+		}
+		pkgname = p
+	}
+
 	// Check if has repository
 	if strings.Contains(pkgname, "::") {
 		words = strings.Split(pkgname, "::")
