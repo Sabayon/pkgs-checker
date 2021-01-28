@@ -182,6 +182,122 @@ func (p *GentooPackage) GetPF() string {
 	return fmt.Sprintf("%s-%s", p.GetPN(), p.GetPVR())
 }
 
+func (p *GentooPackage) getVersions(i *GentooPackage) (*version.Version, *version.Version, error) {
+	var v1 *version.Version = nil
+	var v2 *version.Version = nil
+	var err error
+
+	if p.Category != i.Category {
+		return v1, v2, errors.New(
+			fmt.Sprintf("Wrong category for package %s", i.Name))
+	}
+
+	if p.Name != i.Name {
+		return v1, v2, errors.New(
+			fmt.Sprintf("Wrong name for package %s", i.Name))
+	}
+
+	if p.Version == "" {
+		return v1, v2, errors.New(
+			fmt.Sprintf("Package without version. I can't compare versions."))
+	}
+
+	if i.Version == "" {
+		return v1, v2, errors.New(
+			fmt.Sprintf("Package supply without version. I can't compare versions."))
+	}
+
+	v1s := p.Version
+	v2s := i.Version
+
+	if p.VersionBuild != "" {
+		v1s = p.Version + "+" + p.VersionBuild
+	}
+	v1, err = version.NewVersion(v1s)
+	if err != nil {
+		return nil, nil, err
+	}
+	if i.VersionBuild != "" {
+		v2s = i.Version + "+" + i.VersionBuild
+	}
+	v2, err = version.NewVersion(v2s)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return v1, v2, nil
+}
+
+func (p *GentooPackage) orderDifferentPkgs(i *GentooPackage, mode int) bool {
+	if p.Category != i.Category {
+		if mode == 0 {
+			return p.Category < i.Category
+		}
+		return p.Category > i.Category
+	}
+	if mode == 0 {
+		return p.Name < i.Name
+	}
+	return p.Name > i.Name
+}
+
+func (p *GentooPackage) GreaterThan(i *GentooPackage) (bool, error) {
+	if p.Category != i.Category || p.Name != i.Name {
+		return p.orderDifferentPkgs(i, 1), nil
+	}
+	v1, v2, err := p.getVersions(i)
+	if err != nil {
+		return false, err
+	}
+	ans := v1.GreaterThan(v2)
+	return ans, nil
+}
+
+func (p *GentooPackage) LessThan(i *GentooPackage) (bool, error) {
+	if p.Category != i.Category || p.Name != i.Name {
+		return p.orderDifferentPkgs(i, 0), nil
+	}
+	v1, v2, err := p.getVersions(i)
+	if err != nil {
+		return false, err
+	}
+	ans := v1.LessThan(v2)
+	return ans, nil
+}
+
+func (p *GentooPackage) LessThanOrEqual(i *GentooPackage) (bool, error) {
+	if p.Category != i.Category || p.Name != i.Name {
+		return p.orderDifferentPkgs(i, 0), nil
+	}
+	v1, v2, err := p.getVersions(i)
+	if err != nil {
+		return false, err
+	}
+	ans := v1.LessThanOrEqual(v2)
+	return ans, nil
+}
+
+func (p *GentooPackage) GreaterThanOrEqual(i *GentooPackage) (bool, error) {
+	if p.Category != i.Category || p.Name != i.Name {
+		return p.orderDifferentPkgs(i, 1), nil
+	}
+	v1, v2, err := p.getVersions(i)
+	if err != nil {
+		return false, err
+	}
+	ans := v1.LessThanOrEqual(v2)
+	return ans, nil
+}
+
+func (p *GentooPackage) Equal(i *GentooPackage) (bool, error) {
+	v1, v2, err := p.getVersions(i)
+	if err != nil {
+		return false, err
+	}
+	ans := v1.Equal(v2)
+	return ans, nil
+}
+
 func (p *GentooPackage) Admit(i *GentooPackage) (bool, error) {
 	var ans bool = false
 	var v1 *version.Version = nil
@@ -196,6 +312,11 @@ func (p *GentooPackage) Admit(i *GentooPackage) (bool, error) {
 	if p.Name != i.Name {
 		return false, errors.New(
 			fmt.Sprintf("Wrong name for package %s", i.Name))
+	}
+
+	// Check Slot
+	if p.Slot != "" && i.Slot != "" && p.Slot != i.Slot {
+		return false, nil
 	}
 
 	v1s := p.Version
@@ -476,4 +597,13 @@ func ParsePackageStr(pkg string) (*GentooPackage, error) {
 	}
 
 	return &ans, nil
+}
+
+type GentooPackageSorter []GentooPackage
+
+func (p GentooPackageSorter) Len() int      { return len(p) }
+func (p GentooPackageSorter) Swap(i, j int) { p[i], p[j] = p[j], p[i] }
+func (p GentooPackageSorter) Less(i, j int) bool {
+	ans, _ := p[i].LessThan(&p[j])
+	return ans
 }

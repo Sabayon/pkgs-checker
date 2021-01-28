@@ -2137,4 +2137,29 @@ var _ = Describe("Gentoo Packages", func() {
 			Expect(gp.Condition.Int()).Should(Equal(PkgCondGreaterEqual))
 		})
 	})
+
+	Context("Check Package sorter", func() {
+		gp1, err := ParsePackageStr("net-vpn/wireguard-0.6.0")
+		It("Check error", func() {
+			Expect(err).Should(BeNil())
+		})
+		gp2, err := ParsePackageStr("net-vpn/wireguard-0.1.0")
+		It("Check error", func() {
+			Expect(err).Should(BeNil())
+		})
+		gp3, err := ParsePackageStr("net-vpn/wireguard-0.4.0")
+		It("Check error", func() {
+			Expect(err).Should(BeNil())
+		})
+
+		pkgs := []GentooPackage{*gp1, *gp2, *gp3}
+
+		sort.Sort(GentooPackageSorter(pkgs))
+
+		It("Check order", func() {
+			Expect(pkgs[0]).Should(Equal(*gp2))
+			Expect(pkgs[1]).Should(Equal(*gp3))
+			Expect(pkgs[2]).Should(Equal(*gp1))
+		})
+	})
 })
