@@ -158,6 +158,15 @@ func (p *GentooPackage) GetPackageName() (ans string) {
 	return
 }
 
+func (p *GentooPackage) GetPackageNameWithSlot() (ans string) {
+	if p.Slot != "0" {
+		ans = fmt.Sprintf("%s:%s", p.GetPackageName(), p.Slot)
+	} else {
+		ans = p.GetPackageName()
+	}
+	return
+}
+
 func (p *GentooPackage) GetP() string {
 	return fmt.Sprintf("%s-%s", p.Name, p.GetPV())
 }
