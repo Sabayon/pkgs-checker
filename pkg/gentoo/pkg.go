@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
 	version "github.com/hashicorp/go-version"
@@ -242,6 +243,7 @@ func (p *GentooPackage) orderDifferentPkgs(i *GentooPackage, mode int) bool {
 }
 
 func (p *GentooPackage) GreaterThan(i *GentooPackage) (bool, error) {
+	var ans bool
 	if p.Category != i.Category || p.Name != i.Name {
 		return p.orderDifferentPkgs(i, 1), nil
 	}
@@ -249,11 +251,30 @@ func (p *GentooPackage) GreaterThan(i *GentooPackage) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	ans := v1.GreaterThan(v2)
+
+	if v1.Equal(v2) {
+		// Order suffix and VersionBuild
+		versionsSuffix := []string{
+			p.VersionSuffix + "+" + p.VersionBuild,
+			i.VersionSuffix + "+" + i.VersionBuild,
+		}
+
+		sort.Strings(versionsSuffix)
+		if versionsSuffix[1] == p.VersionSuffix+"+"+p.VersionBuild {
+			ans = true
+		} else {
+			ans = false
+		}
+
+	} else {
+		ans = v1.GreaterThan(v2)
+	}
 	return ans, nil
 }
 
 func (p *GentooPackage) LessThan(i *GentooPackage) (bool, error) {
+	var ans bool
+
 	if p.Category != i.Category || p.Name != i.Name {
 		return p.orderDifferentPkgs(i, 0), nil
 	}
@@ -261,11 +282,29 @@ func (p *GentooPackage) LessThan(i *GentooPackage) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	ans := v1.LessThan(v2)
+
+	if v1.Equal(v2) {
+		// Order suffix and VersionBuild
+		versionsSuffix := []string{
+			p.VersionSuffix + "+" + p.VersionBuild,
+			i.VersionSuffix + "+" + i.VersionBuild,
+		}
+
+		sort.Strings(versionsSuffix)
+		if versionsSuffix[0] == p.VersionSuffix+"+"+p.VersionBuild {
+			ans = true
+		} else {
+			ans = false
+		}
+
+	} else {
+		ans = v1.LessThan(v2)
+	}
 	return ans, nil
 }
 
 func (p *GentooPackage) LessThanOrEqual(i *GentooPackage) (bool, error) {
+	var ans bool
 	if p.Category != i.Category || p.Name != i.Name {
 		return p.orderDifferentPkgs(i, 0), nil
 	}
@@ -273,11 +312,30 @@ func (p *GentooPackage) LessThanOrEqual(i *GentooPackage) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	ans := v1.LessThanOrEqual(v2)
+
+	if v1.Equal(v2) {
+		// Order suffix and VersionBuild
+		versionsSuffix := []string{
+			p.VersionSuffix + "+" + p.VersionBuild,
+			i.VersionSuffix + "+" + i.VersionBuild,
+		}
+
+		sort.Strings(versionsSuffix)
+		if versionsSuffix[0] == p.VersionSuffix+"+"+p.VersionBuild {
+			ans = true
+		} else {
+			ans = false
+		}
+
+	} else {
+		ans = v1.LessThanOrEqual(v2)
+	}
 	return ans, nil
 }
 
 func (p *GentooPackage) GreaterThanOrEqual(i *GentooPackage) (bool, error) {
+	var ans bool
+
 	if p.Category != i.Category || p.Name != i.Name {
 		return p.orderDifferentPkgs(i, 1), nil
 	}
@@ -285,7 +343,24 @@ func (p *GentooPackage) GreaterThanOrEqual(i *GentooPackage) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	ans := v1.LessThanOrEqual(v2)
+
+	if v1.Equal(v2) {
+		// Order suffix and VersionBuild
+		versionsSuffix := []string{
+			p.VersionSuffix + "+" + p.VersionBuild,
+			i.VersionSuffix + "+" + i.VersionBuild,
+		}
+
+		sort.Strings(versionsSuffix)
+		if versionsSuffix[1] == p.VersionSuffix+"+"+p.VersionBuild {
+			ans = true
+		} else {
+			ans = false
+		}
+
+	} else {
+		ans = v1.LessThanOrEqual(v2)
+	}
 	return ans, nil
 }
 
@@ -295,6 +370,11 @@ func (p *GentooPackage) Equal(i *GentooPackage) (bool, error) {
 		return false, err
 	}
 	ans := v1.Equal(v2)
+
+	if ans && (p.VersionSuffix != i.VersionSuffix || p.VersionBuild != i.VersionBuild) {
+		ans = false
+	}
+
 	return ans, nil
 }
 
