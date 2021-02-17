@@ -1,6 +1,6 @@
 /*
 
-Copyright (C) 2017-2019  Daniele Rondina <geaaru@sabayonlinux.org>
+Copyright (C) 2017-2021  Daniele Rondina <geaaru@sabayonlinux.org>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -177,6 +177,11 @@ func (p *GentooPackage) GetPN() string {
 
 func (p *GentooPackage) GetPV() string {
 	return fmt.Sprintf("%s", p.Version)
+}
+
+func (p *GentooPackage) GetPackageNameWithCond() (ans string) {
+	ans = fmt.Sprintf("%s%s", p.Condition.String(), p.GetPackageName())
+	return
 }
 
 func (p *GentooPackage) GetPVR() (ans string) {
