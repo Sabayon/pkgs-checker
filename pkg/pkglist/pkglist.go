@@ -93,7 +93,10 @@ func PkgListParser(data []byte) ([]string, error) {
 			}
 			return ans, err
 		}
-		ans = append(ans, strings.TrimRight(line, "\r\n"))
+		trimmedLine := strings.TrimRight(line, "\r\n")
+		if trimmedLine != "" {
+			ans = append(ans, trimmedLine)
+		}
 	}
 
 	return ans, nil
