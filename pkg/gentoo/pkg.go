@@ -53,6 +53,10 @@ const (
 	PkgCondAnyRevision = 7
 	// =<pkg>*
 	PkgCondMatchVersion = 8
+	// !<
+	PkgCondNotLess = 9
+	// !>
+	PkgCondNotGreater = 10
 )
 
 const (
@@ -97,12 +101,16 @@ func (p PackageCond) String() (ans string) {
 		ans = "<="
 	} else if p == PkgCondEqual {
 		ans = "="
-	} else if p == PkgCondNot {
-		ans = "!"
 	} else if p == PkgCondAnyRevision {
 		ans = "~"
 	} else if p == PkgCondMatchVersion {
 		ans = "=*"
+	} else if p == PkgCondNotLess {
+		ans = "!<"
+	} else if p == PkgCondNotGreater {
+		ans = "!>"
+	} else if p == PkgCondNot {
+		ans = "!"
 	}
 
 	return ans
@@ -129,6 +137,10 @@ func (p PackageCond) Int() (ans int) {
 		ans = PkgCondAnyRevision
 	} else if p == PkgCondMatchVersion {
 		ans = PkgCondMatchVersion
+	} else if p == PkgCondNotLess {
+		ans = PkgCondNotLess
+	} else if p == PkgCondNotGreater {
+		ans = PkgCondNotGreater
 	}
 	return
 }
@@ -543,6 +555,12 @@ func ParsePackageStr(pkg string) (*GentooPackage, error) {
 	} else if strings.HasPrefix(pkg, "~") {
 		pkg = pkg[1:]
 		ans.Condition = PkgCondAnyRevision
+	} else if strings.HasPrefix(pkg, "!<") {
+		pkg = pkg[2:]
+		ans.Condition = PkgCondNotLess
+	} else if strings.HasPrefix(pkg, "!>") {
+		pkg = pkg[2:]
+		ans.Condition = PkgCondNotGreater
 	} else if strings.HasPrefix(pkg, "!") {
 		pkg = pkg[1:]
 		ans.Condition = PkgCondNot
