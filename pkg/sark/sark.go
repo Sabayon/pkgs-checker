@@ -24,8 +24,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	yaml "github.com/go-yaml/yaml"
 	v "github.com/spf13/viper"
+	yaml "gopkg.in/yaml.v2"
 
 	commons "github.com/Sabayon/pkgs-checker/pkg/commons"
 )
