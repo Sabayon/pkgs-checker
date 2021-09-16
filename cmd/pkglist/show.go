@@ -1,6 +1,6 @@
 /*
 
-Copyright (C) 2017-2019  Daniele Rondina <geaaru@sabayonlinux.org>
+Copyright (C) 2017-2021  Daniele Rondina <geaaru@sabayonlinux.org>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -68,7 +68,7 @@ func newPkglistShowCommand() *cobra.Command {
 
 				list, err := pkglist.PkgListLoadResource(r1, apiKey, opts)
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error on load resource %s\n", r1)
+					fmt.Fprintf(os.Stderr, "Error on load resource %s: %s\n", r1, err.Error())
 					os.Exit(1)
 				}
 
