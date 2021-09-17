@@ -1384,6 +1384,80 @@ var _ = Describe("Gentoo Packages", func() {
 			})
 		})
 
+		Context("Parse font package1", func() {
+
+			pkg, err := ParsePackageStr(">=media-fonts/font-bitstream-100dpi-1.0.3-r2")
+			g := GentooPackage{
+				Name:          "font-bitstream-100dpi",
+				Category:      "media-fonts",
+				Condition:     PkgCondGreaterEqual,
+				Slot:          "0",
+				Version:       "1.0.3",
+				VersionSuffix: "-r2",
+				VersionBuild:  "",
+				Repository:    "",
+			}
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check pkgName", func() {
+				Expect((*pkg).Name).Should(Equal("font-bitstream-100dpi"))
+			})
+
+			It("Check category", func() {
+				Expect((*pkg).Category).Should(Equal("media-fonts"))
+			})
+
+			It("Check cond", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg).Condition).Should(Equal(g.Condition))
+			})
+
+			It("Check struct", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg)).Should(Equal(g))
+			})
+		})
+
+		Context("Parse font package2", func() {
+
+			pkg, err := ParsePackageStr(">=media-fonts/font-bitstream-100dpi")
+			g := GentooPackage{
+				Name:          "font-bitstream-100dpi",
+				Category:      "media-fonts",
+				Condition:     PkgCondGreaterEqual,
+				Slot:          "0",
+				Version:       "",
+				VersionSuffix: "",
+				VersionBuild:  "",
+				Repository:    "",
+			}
+
+			It("Check error", func() {
+				Expect(err).Should(BeNil())
+			})
+
+			It("Check pkgName", func() {
+				Expect((*pkg).Name).Should(Equal("font-bitstream-100dpi"))
+			})
+
+			It("Check category", func() {
+				Expect((*pkg).Category).Should(Equal("media-fonts"))
+			})
+
+			It("Check cond", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg).Condition).Should(Equal(g.Condition))
+			})
+
+			It("Check struct", func() {
+				// TODO: check how use PkgCondInvalid
+				Expect((*pkg)).Should(Equal(g))
+			})
+		})
+
 		Context("Parse dep with use flags", func() {
 
 			pkg, err := ParsePackageStr(">=dev-libs/dbus-9.9.9[use1,use2,use3(+)]")
