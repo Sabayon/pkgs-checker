@@ -33,14 +33,20 @@ import (
 	"github.com/Sabayon/pkgs-checker/pkg/commons"
 )
 
+var (
+	BuildTime   string
+	BuildCommit string
+)
+
 // Logfile file descriptor pointer
 var logFile *os.File
 
 // Program command declaration
 var rootCmd = &cobra.Command{
-	Short:   "Sabayon packages checker",
-	Version: commons.PKGS_CHECKER_VERSION,
-	Args:    cobra.OnlyValidArgs,
+	Short: "Sabayon packages checker",
+	Version: fmt.Sprintf("%s-g%s %s", commons.PKGS_CHECKER_VERSION,
+		BuildCommit, BuildTime),
+	Args: cobra.OnlyValidArgs,
 
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		logFile = commons.InitLogging()
