@@ -9,7 +9,6 @@ builds:
       - arm64
 
     goarm:
-      - 6
       - 7
 
     ldflags:
