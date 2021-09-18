@@ -5,11 +5,11 @@ builds:
       - linux
     goarch:
       - amd64
-      - arm
-      - arm64
+        #  - arm
+        #- arm64
 
-    goarm:
-      - 7
+    #goarm:
+    #  - 7
 
     ldflags:
       - >-
