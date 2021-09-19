@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	"github.com/Sabayon/pkgs-checker/pkg/gentoo"
+	"github.com/Sabayon/pkgs-checker/pkg/luet"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
@@ -65,6 +66,8 @@ func newGenPkgsUsesCommand() *cobra.Command {
 			dbPkgsDir, _ := cmd.Flags().GetString("db-pkgs-dir-path")
 			jsonOutput, _ := cmd.Flags().GetBool("json")
 			filterFile, _ := cmd.Flags().GetString("filter-opts")
+			treePath, _ := cmd.Flags().GetString("treePath")
+			lpcFormat, _ := cmd.Flags().GetBool("luet-portage-converter-format")
 
 			if dbPkgsDir == "" {
 				fmt.Println("Invalid Path of the portage metadata.")
@@ -111,10 +114,20 @@ func newGenPkgsUsesCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if jsonOutput {
+			if lpcFormat {
+				artefacts := luet.ConvertPortageMeta2PortageConverter(pkgs, treePath)
+
+				data, err := yaml.Marshal(&artefacts)
+				if err != nil {
+					fmt.Println(fmt.Sprintf("Error on convert data to YAML: %s", err.Error()))
+					os.Exit(1)
+				}
+
+				fmt.Println(string(data))
+			} else if jsonOutput {
 				data, err := json.Marshal(pkgs)
 				if err != nil {
-					fmt.Println(fmt.Errorf("Error on convert data to json: %s", err.Error()))
+					fmt.Println(fmt.Sprintf("Error on convert data to json: %s", err.Error()))
 					os.Exit(1)
 				}
 				fmt.Println(string(data))
@@ -134,6 +147,10 @@ func newGenPkgsUsesCommand() *cobra.Command {
 		"Path of the portage metadata.")
 	flags.BoolP("json", "j", false, "Output in JSON format")
 	flags.String("filter-opts", "", "Using filter rules through YAML file.")
+	flags.Bool("luet-portage-converter-format", false,
+		"Generate luet-portage-converter YAML output.")
+	flags.String("treePath", "packages/atoms",
+		"Define the tree path to use on luet-portage-converter artefacts.")
 
 	return cmd
 }

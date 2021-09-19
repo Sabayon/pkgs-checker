@@ -18,6 +18,7 @@ use_filters:
   - "^alpha"
   - "^sparc"
   - "^elibc_"
+  - "^abi_"
 
 # Define the categories to elaborate.
 # If the list is empty all categories are elaborated.
