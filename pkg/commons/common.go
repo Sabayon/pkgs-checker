@@ -30,7 +30,7 @@ import (
 	settings "github.com/spf13/viper"
 )
 
-const PKGS_CHECKER_VERSION = "0.8.4"
+const PKGS_CHECKER_VERSION = "0.9.0"
 const PKGS_CHECKER_EMPTY_PKGHASH = "00000000000000000000000000000000"
 
 func InitConcurrency() {
