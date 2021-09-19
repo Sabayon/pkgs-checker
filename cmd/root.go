@@ -29,6 +29,7 @@ import (
 	"github.com/Sabayon/pkgs-checker/cmd/entropy"
 	"github.com/Sabayon/pkgs-checker/cmd/pkg"
 	"github.com/Sabayon/pkgs-checker/cmd/pkglist"
+	"github.com/Sabayon/pkgs-checker/cmd/portage"
 	"github.com/Sabayon/pkgs-checker/cmd/sark"
 	"github.com/Sabayon/pkgs-checker/pkg/commons"
 )
@@ -73,6 +74,7 @@ func init() {
 		pkglist.NewPkglistCommand(),
 		sark.NewSarkCommand(),
 		entropy.NewEntropyCommand(),
+		portage.NewPortageCommand(),
 	)
 }
 
