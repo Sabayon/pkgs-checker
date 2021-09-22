@@ -1,5 +1,7 @@
 # Sabayon Packages Checker
 
+[![Coverage Status](https://coveralls.io/repos/github/Sabayon/pkgs-checker/badge.svg?branch=master)](https://coveralls.io/github/Sabayon/pkgs-checker?branch=master)
+
 Tool used for different tasks on Sabayon build process.
 
 ```bash
