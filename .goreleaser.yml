@@ -19,10 +19,8 @@ builds:
         -X github.com/Sabayon/pkgs-checker/cmd.BuildCommit={{.Commit}}
 
 archives:
-  - replacements:
-      linux: Linux
-      386: i386
-      amd64: x86_64
+  - format: binary
+    name_template: pkgs-checker-{{ .Tag }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}
 source:
   enabled: true
   name_template: '{{ .ProjectName }}-{{ .Tag }}-source'
