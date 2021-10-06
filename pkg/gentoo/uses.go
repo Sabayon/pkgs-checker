@@ -50,6 +50,7 @@ type PortageUseParseOpts struct {
 	UseFilters []string `json:"use_filters,omitempty" yaml:"use_filters,omitempty"`
 	Categories []string `json:"categories,omitempty" yaml:"categories,omitempty"`
 	Packages   []string `json:"pkgs_filters,omitempty" yaml:"pkgs_filters,omitempty"`
+	Verbose    bool     `json:"verbose,omitempty" yaml:"verbose,omitempty"`
 }
 
 func NewPortageMetaData(pkg *GentooPackage) *PortageMetaData {
@@ -89,12 +90,21 @@ func (o *PortageUseParseOpts) IsPkgAdmit(pkg string) bool {
 
 	// Prepare regex
 	if len(o.Packages) > 0 {
+
+		gp, err := ParsePackageStr(pkg)
+		if err == nil && gp.Slot == "0" {
+			pkg = gp.GetPackageName() + ":0"
+		}
+
 		for _, f := range o.Packages {
 			r := regexp.MustCompile(f)
 			if r != nil {
 				if r.MatchString(pkg) {
 					ans = true
 					break
+				} else if o.Verbose {
+					fmt.Println(fmt.Sprintf("[%s] doesn't match with regex %s.",
+						pkg, f))
 				}
 			} else {
 				fmt.Println("WARNING: Regex " + f + " not compiled.")

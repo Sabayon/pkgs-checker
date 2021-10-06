@@ -68,6 +68,7 @@ func newGenPkgsUsesCommand() *cobra.Command {
 			filterFile, _ := cmd.Flags().GetString("filter-opts")
 			treePath, _ := cmd.Flags().GetString("treePath")
 			lpcFormat, _ := cmd.Flags().GetBool("luet-portage-converter-format")
+			verbose, _ := cmd.Flags().GetBool("verbose")
 
 			if dbPkgsDir == "" {
 				fmt.Println("Invalid Path of the portage metadata.")
@@ -107,6 +108,8 @@ func newGenPkgsUsesCommand() *cobra.Command {
 					},
 				}
 			}
+
+			opts.Verbose = verbose
 
 			pkgs, err := gentoo.ParseMetadataDir(dbPkgsDir, opts)
 			if err != nil {
