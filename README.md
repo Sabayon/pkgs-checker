@@ -80,7 +80,7 @@ pkgs_filters:
 With the options `--luet-portage-converter-format` and `--treePath` is possible to generate
 the YAML content used by the `luet-portage-converter` tool.
 
-## *portage metadata*
+## *portage metadata* command
 
 Show metadata of a Portage package.
 
@@ -341,7 +341,7 @@ $> pkgs-checker portage metadata sys-devel/bc:0 -j | jq
 ]
 ```
 
-## *portage metadata* command
+## *portage gen-metadata* command
 
 Permit to read and generate the metadata files used by Portage to a defined path or one or more
 packages.
