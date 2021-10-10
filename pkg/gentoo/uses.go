@@ -35,6 +35,7 @@ type PortageMetaData struct {
 	Use            []string `json:"use,omitempty"`
 	Eapi           string   `json:"eapi,omitempty"`
 	CxxFlags       string   `json:"cxxflags,omitempty"`
+	CFlags         string   `json:"cflags,omitempty"`
 	LdFlags        string   `json:"ldflags,omitempty"`
 	CHost          string   `json:"chost,omitempty"`
 	BDEPEND        string   `json:"bdepend,omitempty"`
@@ -346,6 +347,13 @@ func ParsePackageMetadataDir(dir string, opts *PortageUseParseOpts) (*PortageMet
 		return nil, err
 	}
 
+	ans.CFlags, err = parseMetaFile(
+		filepath.Join(metaDir, "CFLAGS"), true,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	ans.CxxFlags, err = parseMetaFile(
 		filepath.Join(metaDir, "CXXFLAGS"), true,
 	)
@@ -443,7 +451,7 @@ func ParsePackageMetadataDir(dir string, opts *PortageUseParseOpts) (*PortageMet
 		ans.GentooPackage.UseFlags = elaborateUses(ans.IUseEffective, ans.Use, opts)
 	}
 
-	ans.Ebuild, err = parseMetaFile(filepath.Join(metaDir, ans.GentooPackage.GetPVR()), true)
+	ans.Ebuild, err = parseMetaFile(filepath.Join(metaDir, ans.GentooPackage.GetPF()+".ebuild"), true)
 	if err != nil {
 		return nil, err
 	}
@@ -597,4 +605,324 @@ func (e PortageContentElem) String() string {
 	default:
 	}
 	return ans
+}
+
+func (m *PortageMetaData) WriteMetadata2Dir(dir string, opts *PortageUseParseOpts) error {
+
+	metadir := filepath.Join(dir,
+		fmt.Sprintf("/var/db/pkg/%s-%s", m.GetPackageName(), m.GetPVR()),
+	)
+
+	var fileMode os.FileMode
+	fileMode = os.ModeDir | 0744
+
+	err := os.MkdirAll(metadir, fileMode)
+	if err != nil {
+		return err
+	}
+
+	// Write BDEPEND file
+	if m.BDEPEND != "" {
+		err = os.WriteFile(filepath.Join(metadir, "BDEPEND"),
+			[]byte(m.BDEPEND+"\n"), 0644,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Write BUILD_TIME
+	err = os.WriteFile(filepath.Join(metadir, "BUILD_TIME"),
+		[]byte(m.BUILD_TIME+"\n"), 0644,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Write CATEGORY
+	err = os.WriteFile(filepath.Join(metadir, "CATEGORY"),
+		[]byte(m.Category+"\n"), 0644,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Write CBUILD
+	err = os.WriteFile(filepath.Join(metadir, "CBUILD"),
+		[]byte(m.CBUILD+"\n"), 0644,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Write CFLAGS
+	err = os.WriteFile(filepath.Join(metadir, "CFLAGS"),
+		[]byte(m.CFlags+"\n"), 0644,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Write CHOST
+	err = os.WriteFile(filepath.Join(metadir, "CHOST"),
+		[]byte(m.CHost+"\n"), 0644,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Write CONTENTS
+	if len(m.CONTENTS) > 0 {
+		contents := ""
+		for _, e := range m.CONTENTS {
+			contents += e.String() + "\n"
+		}
+		// TODO: maybe this could be handled with a writer that
+		// doesn't require the load of all files in memory.
+		err = os.WriteFile(filepath.Join(metadir, "CONTENTS"),
+			[]byte(contents), 0644,
+		)
+
+		if err != nil {
+			return errors.New("Error on write CONTENTS: " + err.Error())
+		}
+	}
+
+	// Write COUNTER
+	err = os.WriteFile(filepath.Join(metadir, "COUNTER"),
+		[]byte(m.COUNTER), 0644,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Write CXXFLAGS
+	err = os.WriteFile(filepath.Join(metadir, "CXXFLAGS"),
+		[]byte(m.CxxFlags+"\n"), 0644,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Write DEFINED_PHASES
+	err = os.WriteFile(filepath.Join(metadir, "DEFINED_PHASES"),
+		[]byte(m.DEFINED_PHASES+"\n"), 0644,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Write DEPEND
+	if m.DEPEND != "" {
+		err = os.WriteFile(filepath.Join(metadir, "DEPEND"),
+			[]byte(m.DEPEND+"\n"), 0644,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Write DESCRIPTION
+	err = os.WriteFile(filepath.Join(metadir, "DESCRIPTION"),
+		[]byte(m.DESCRIPTION+"\n"), 0644,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Write EAPI
+	err = os.WriteFile(filepath.Join(metadir, "EAPI"),
+		[]byte(m.Eapi+"\n"), 0644,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Write FEATURES
+	err = os.WriteFile(filepath.Join(metadir, "FEATURES"),
+		[]byte(m.FEATURES+"\n"), 0644,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Write HOMEPAGE
+	if m.HOMEPAGE != "" {
+		err = os.WriteFile(filepath.Join(metadir, "HOMEPAGE"),
+			[]byte(m.HOMEPAGE+"\n"), 0644,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Write INHERITED
+	if m.INHERITED != "" {
+		err = os.WriteFile(filepath.Join(metadir, "INHERITED"),
+			[]byte(m.INHERITED+"\n"), 0644,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Write IUSE
+	err = os.WriteFile(filepath.Join(metadir, "IUSE"),
+		[]byte(strings.Join(m.IUse, " ")+"\n"), 0644,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Write IUSE_EFFECTIVE
+	err = os.WriteFile(filepath.Join(metadir, "IUSE_EFFECTIVE"),
+		[]byte(strings.Join(m.IUseEffective, " ")+"\n"), 0644,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Write KEYWORDS
+	err = os.WriteFile(filepath.Join(metadir, "KEYWORDS"),
+		[]byte(m.KEYWORDS+"\n"), 0644,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Write LDFLAGS
+	err = os.WriteFile(filepath.Join(metadir, "LDFLAGS"),
+		[]byte(m.LdFlags+"\n"), 0644,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Write LICENSE
+	err = os.WriteFile(filepath.Join(metadir, "LICENSE"),
+		[]byte(m.GentooPackage.License+"\n"), 0644,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Write NEEDED
+	if m.NEEDED != "" {
+		err = os.WriteFile(filepath.Join(metadir, "NEEDED"),
+			[]byte(m.NEEDED+"\n"), 0644,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Write NEEDED.ELF.2
+	if m.NEEDED_ELF2 != "" {
+		err = os.WriteFile(filepath.Join(metadir, "NEEDED.ELF.2"),
+			[]byte(m.NEEDED_ELF2+"\n"), 0644,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Write PF
+	err = os.WriteFile(filepath.Join(metadir, "PF"),
+		[]byte(m.GetPF()+"\n"), 0644,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Write PKGUSE
+	if m.PKGUSE != "" {
+		err = os.WriteFile(filepath.Join(metadir, "PKGUSE"),
+			[]byte(m.PKGUSE+"\n"), 0644,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Write PROVIDES
+	if m.PROVIDES != "" {
+		err = os.WriteFile(filepath.Join(metadir, "PROVIDES"),
+			[]byte(m.PROVIDES+"\n"), 0644,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Write RDEPEND
+	if m.RDEPEND != "" {
+		err = os.WriteFile(filepath.Join(metadir, "RDEPEND"),
+			[]byte(m.RDEPEND+"\n"), 0644,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Write repository
+	err = os.WriteFile(filepath.Join(metadir, "repository"),
+		[]byte(m.GentooPackage.Repository+"\n"), 0644,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Write REQUIRES
+	if m.REQUIRES != "" {
+		err = os.WriteFile(filepath.Join(metadir, "REQUIRES"),
+			[]byte(m.REQUIRES+"\n"), 0644,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Write RESTRICT
+	if m.RESTRICT != "" {
+		err = os.WriteFile(filepath.Join(metadir, "RESTRICT"),
+			[]byte(m.RESTRICT+"\n"), 0644,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Write SIZE
+	err = os.WriteFile(filepath.Join(metadir, "SIZE"),
+		[]byte(m.SIZE+"\n"), 0644,
+	)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(filepath.Join(metadir, "SLOT"),
+		[]byte(m.GentooPackage.Slot+"\n"), 0644,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Write USE
+	err = os.WriteFile(filepath.Join(metadir, "USE"),
+		[]byte(strings.Join(m.Use, " ")+"\n"), 0644,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Write <name>-<version>.ebuild
+	err = os.WriteFile(filepath.Join(metadir,
+		fmt.Sprintf("%s.ebuild", m.GetPF())),
+		[]byte(m.Ebuild+"\n"), 0644,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
