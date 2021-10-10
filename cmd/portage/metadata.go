@@ -21,7 +21,6 @@ package portage
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -32,35 +31,24 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func parseFilterFile(file string) (*gentoo.PortageUseParseOpts, error) {
-	var ans *gentoo.PortageUseParseOpts
-
-	_, err := os.Stat(file)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return ans, err
-		}
-		return ans, err
-	}
-
-	data, err := ioutil.ReadFile(file)
-	if err != nil {
-		return ans, err
-	}
-
-	if err := yaml.Unmarshal(data, &ans); err != nil {
-		return ans, err
-	}
-
-	return ans, nil
-}
-
-func newGenPkgsUsesCommand() *cobra.Command {
+func newMetadataCommand() *cobra.Command {
 
 	var cmd = &cobra.Command{
-		Use:   "gen-pkgs-uses [OPTIONS]",
-		Short: "Generate packages.use of the installed pkgs.",
+		Use:   "metadata cat/pkg[:slot] [OPTIONS]",
+		Short: "Show metadata of a package.",
 		Args:  cobra.OnlyValidArgs,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			if len(args) == 0 {
+				fmt.Fprintf(os.Stderr, "No packages defined.\n")
+				os.Exit(1)
+			}
+
+			dbPkgsDir, _ := cmd.Flags().GetString("db-pkgs-dir-path")
+			if dbPkgsDir == "" {
+				fmt.Println("Invalid Path of the portage metadata.")
+				os.Exit(1)
+			}
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 
 			dbPkgsDir, _ := cmd.Flags().GetString("db-pkgs-dir-path")
@@ -69,11 +57,6 @@ func newGenPkgsUsesCommand() *cobra.Command {
 			treePath, _ := cmd.Flags().GetString("treePath")
 			lpcFormat, _ := cmd.Flags().GetBool("luet-portage-converter-format")
 			verbose, _ := cmd.Flags().GetBool("verbose")
-
-			if dbPkgsDir == "" {
-				fmt.Println("Invalid Path of the portage metadata.")
-				os.Exit(1)
-			}
 
 			var opts *gentoo.PortageUseParseOpts
 			var err error
@@ -84,6 +67,7 @@ func newGenPkgsUsesCommand() *cobra.Command {
 					fmt.Println("Error on read filter file: " + err.Error())
 					os.Exit(1)
 				}
+
 			} else {
 
 				opts = &gentoo.PortageUseParseOpts{
@@ -107,6 +91,22 @@ func newGenPkgsUsesCommand() *cobra.Command {
 						"^elibc_",
 					},
 				}
+			}
+
+			// Reset filter
+			opts.Categories = []string{}
+			opts.Packages = []string{}
+
+			for _, pkg := range args {
+				gp, err := gentoo.ParsePackageStr(pkg)
+				if err != nil {
+					fmt.Println(fmt.Sprintf("Invalid pkg %s: %s",
+						pkg, err.Error()))
+					os.Exit(1)
+				}
+
+				opts.Packages = append(opts.Packages, gp.GetPackageNameWithSlot())
+				opts.AddCategory(gp.Category)
 			}
 
 			opts.Verbose = verbose
@@ -137,8 +137,40 @@ func newGenPkgsUsesCommand() *cobra.Command {
 			} else {
 				for _, p := range pkgs {
 					fmt.Println(
-						fmt.Sprintf("%s %s", p.GetPackageNameWithSlot(), strings.Join(p.UseFlags, " ")),
+						fmt.Sprintf("Package: %s %s", p.GetPackageNameWithSlot(), strings.Join(p.UseFlags, " ")),
 					)
+					fmt.Println(
+						fmt.Sprintf(
+							"Bdepend: %s\n"+
+								"Rdepend: %s\n"+
+								"Depend: %s\n"+
+								"CxxFlags: %s\n"+
+								"Ldflags: %s\n"+
+								"Chost: %s\n"+
+								"License: %s\n"+
+								"Keywords: %s\n"+
+								"Provides: %s\n"+
+								"Size: %s",
+							p.BDEPEND,
+							p.RDEPEND,
+							p.DEPEND,
+							p.CxxFlags,
+							p.LdFlags,
+							p.CHost,
+							p.License,
+							p.KEYWORDS,
+							p.PROVIDES,
+							p.SIZE,
+						),
+					)
+
+					if len(p.CONTENTS) > 0 {
+						fmt.Println("CONTENTS:")
+						for _, e := range p.CONTENTS {
+							fmt.Println(e)
+						}
+					}
+
 				}
 			}
 		},

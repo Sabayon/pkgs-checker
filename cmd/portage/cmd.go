@@ -31,6 +31,7 @@ func NewPortageCommand() *cobra.Command {
 
 	cmd.AddCommand(
 		newGenPkgsUsesCommand(),
+		newMetadataCommand(),
 	)
 
 	return cmd

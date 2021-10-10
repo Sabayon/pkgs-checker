@@ -44,6 +44,30 @@ type PortageMetaData struct {
 	KEYWORDS       string   `json:"keywords,omitempty"`
 	PROVIDES       string   `json:"provides,omitempty"`
 	SIZE           string   `json:"size,omitempty"`
+	BUILD_TIME     string   `json:"build_time,omitempty"`
+	CBUILD         string   `json:"cbuild,omitempty"`
+	COUNTER        string   `json:"counter,omitempty"`
+	DEFINED_PHASES string   `json:"defined_phases,omitempty"`
+	DESCRIPTION    string   `json:"description,omitempty"`
+	FEATURES       string   `json:"features,omitempty"`
+	HOMEPAGE       string   `json:"homepage,omitempty"`
+	INHERITED      string   `json:"inherited,omitempty"`
+	NEEDED         string   `json:"needed,omitempty"`
+	NEEDED_ELF2    string   `json:"needed_elf2,omitempty"`
+	PKGUSE         string   `json:"pkguse,omitempty"`
+	RESTRICT       string   `json:"restrict,omitempty"`
+
+	Ebuild string `json:"ebuild,omitempty"`
+
+	CONTENTS []PortageContentElem `json:"content,omitempty"`
+}
+
+type PortageContentElem struct {
+	Type          string `json:"type"`
+	File          string `json:"file"`
+	Hash          string `json:"hash,omitempty"`
+	UnixTimestamp string `json:"timestamp,omitempty"`
+	Link          string `json:"link,omitempty"`
 }
 
 type PortageUseParseOpts struct {
@@ -55,16 +79,46 @@ type PortageUseParseOpts struct {
 
 func NewPortageMetaData(pkg *GentooPackage) *PortageMetaData {
 	return &PortageMetaData{
-		GentooPackage: pkg,
-		IUse:          make([]string, 0),
-		IUseEffective: make([]string, 0),
-		Use:           make([]string, 0),
-		Eapi:          "",
-		CxxFlags:      "",
-		LdFlags:       "",
-		BDEPEND:       "",
-		RDEPEND:       "",
-		DEPEND:        "",
+		GentooPackage:  pkg,
+		IUse:           make([]string, 0),
+		IUseEffective:  make([]string, 0),
+		Use:            make([]string, 0),
+		Eapi:           "",
+		CxxFlags:       "",
+		LdFlags:        "",
+		BDEPEND:        "",
+		RDEPEND:        "",
+		DEPEND:         "",
+		BUILD_TIME:     "",
+		CBUILD:         "",
+		COUNTER:        "",
+		DEFINED_PHASES: "",
+		DESCRIPTION:    "",
+		FEATURES:       "",
+		HOMEPAGE:       "",
+		INHERITED:      "",
+		NEEDED:         "",
+		NEEDED_ELF2:    "",
+		PKGUSE:         "",
+		RESTRICT:       "",
+		REQUIRES:       "",
+		SIZE:           "",
+		CONTENTS:       make([]PortageContentElem, 0),
+	}
+}
+
+func (o *PortageUseParseOpts) AddCategory(cat string) {
+
+	present := false
+	for _, c := range o.Categories {
+		if c == cat {
+			present = true
+			break
+		}
+	}
+
+	if !present {
+		o.Categories = append(o.Categories, cat)
 	}
 }
 
@@ -117,7 +171,7 @@ func (o *PortageUseParseOpts) IsPkgAdmit(pkg string) bool {
 	return ans
 }
 
-func ParseMetadataDir(dir string, opts PortageUseParseOpts) ([]*PortageMetaData, error) {
+func ParseMetadataDir(dir string, opts *PortageUseParseOpts) ([]*PortageMetaData, error) {
 	ans := make([]*PortageMetaData, 0)
 
 	files, err := ioutil.ReadDir(dir)
@@ -141,7 +195,7 @@ func ParseMetadataDir(dir string, opts PortageUseParseOpts) ([]*PortageMetaData,
 	return ans, nil
 }
 
-func ParseMetadataCatDir(dir string, opts PortageUseParseOpts) ([]*PortageMetaData, error) {
+func ParseMetadataCatDir(dir string, opts *PortageUseParseOpts) ([]*PortageMetaData, error) {
 	ans := make([]*PortageMetaData, 0)
 
 	files, err := ioutil.ReadDir(dir)
@@ -167,7 +221,7 @@ func ParseMetadataCatDir(dir string, opts PortageUseParseOpts) ([]*PortageMetaDa
 	return ans, nil
 }
 
-func ParsePackageMetadataDir(dir string, opts PortageUseParseOpts) (*PortageMetaData, error) {
+func ParsePackageMetadataDir(dir string, opts *PortageUseParseOpts) (*PortageMetaData, error) {
 	var ans *PortageMetaData = nil
 
 	// Check if the directory is valid
@@ -214,6 +268,66 @@ func ParsePackageMetadataDir(dir string, opts PortageUseParseOpts) (*PortageMeta
 	}
 
 	ans.DEPEND, err = parseMetaFile(filepath.Join(metaDir, "DEPEND"), true)
+	if err != nil {
+		return nil, err
+	}
+
+	ans.BUILD_TIME, err = parseMetaFile(filepath.Join(metaDir, "BUILD_TIME"), true)
+	if err != nil {
+		return nil, err
+	}
+
+	ans.CBUILD, err = parseMetaFile(filepath.Join(metaDir, "CBUILD"), true)
+	if err != nil {
+		return nil, err
+	}
+
+	ans.COUNTER, err = parseMetaFile(filepath.Join(metaDir, "COUNTER"), true)
+	if err != nil {
+		return nil, err
+	}
+
+	ans.DEFINED_PHASES, err = parseMetaFile(filepath.Join(metaDir, "DEFINED_PHASES"), true)
+	if err != nil {
+		return nil, err
+	}
+
+	ans.DESCRIPTION, err = parseMetaFile(filepath.Join(metaDir, "DESCRIPTION"), true)
+	if err != nil {
+		return nil, err
+	}
+
+	ans.FEATURES, err = parseMetaFile(filepath.Join(metaDir, "FEATURES"), true)
+	if err != nil {
+		return nil, err
+	}
+
+	ans.HOMEPAGE, err = parseMetaFile(filepath.Join(metaDir, "HOMEPAGE"), true)
+	if err != nil {
+		return nil, err
+	}
+
+	ans.INHERITED, err = parseMetaFile(filepath.Join(metaDir, "INHERITED"), true)
+	if err != nil {
+		return nil, err
+	}
+
+	ans.NEEDED, err = parseMetaFile(filepath.Join(metaDir, "NEEDED"), true)
+	if err != nil {
+		return nil, err
+	}
+
+	ans.NEEDED_ELF2, err = parseMetaFile(filepath.Join(metaDir, "NEEDED_ELF2"), true)
+	if err != nil {
+		return nil, err
+	}
+
+	ans.PKGUSE, err = parseMetaFile(filepath.Join(metaDir, "PKGUSE"), true)
+	if err != nil {
+		return nil, err
+	}
+
+	ans.RESTRICT, err = parseMetaFile(filepath.Join(metaDir, "RESTRICT"), true)
 	if err != nil {
 		return nil, err
 	}
@@ -329,6 +443,16 @@ func ParsePackageMetadataDir(dir string, opts PortageUseParseOpts) (*PortageMeta
 		ans.GentooPackage.UseFlags = elaborateUses(ans.IUseEffective, ans.Use, opts)
 	}
 
+	ans.Ebuild, err = parseMetaFile(filepath.Join(metaDir, ans.GentooPackage.GetPVR()), true)
+	if err != nil {
+		return nil, err
+	}
+
+	ans.CONTENTS, err = GetCONTENTS(filepath.Join(metaDir, "CONTENTS"))
+	if err != nil {
+		return nil, err
+	}
+
 	return ans, nil
 }
 
@@ -343,7 +467,7 @@ func useInArray(use string, arr []string) bool {
 	return ans
 }
 
-func elaborateUses(iuse, use []string, opts PortageUseParseOpts) []string {
+func elaborateUses(iuse, use []string, opts *PortageUseParseOpts) []string {
 	ans := []string{}
 
 	// Prepare regex
@@ -410,4 +534,67 @@ func parseMetaFile(file string, dropLn bool) (string, error) {
 	}
 
 	return ans, nil
+}
+
+func GetCONTENTS(file string) ([]PortageContentElem, error) {
+	ans := []PortageContentElem{}
+
+	_, err := os.Stat(file)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return ans, nil
+		}
+		return ans, err
+	}
+
+	data, err := ioutil.ReadFile(file)
+	if err != nil {
+		return ans, err
+	}
+
+	lines := strings.Split(string(data), "\n")
+
+	for _, line := range lines {
+
+		words := strings.Split(line, " ")
+
+		if len(words) > 1 {
+
+			elem := PortageContentElem{
+				Type: words[0],
+				File: words[1],
+			}
+
+			switch words[0] {
+			case "dir":
+			case "obj":
+				elem.Hash = words[2]
+				elem.UnixTimestamp = words[3]
+			case "sym":
+				elem.Link = words[3]
+				elem.UnixTimestamp = words[4]
+			default:
+				continue
+			}
+
+			ans = append(ans, elem)
+		}
+
+	}
+
+	return ans, nil
+}
+
+func (e PortageContentElem) String() string {
+	ans := e.Type + " "
+	ans += e.File
+
+	switch e.Type {
+	case "obj":
+		ans += " " + e.Hash + " " + e.UnixTimestamp
+	case "sym":
+		ans += " " + "->" + e.Link + " " + e.UnixTimestamp
+	default:
+	}
+	return ans
 }
