@@ -1,6 +1,6 @@
 module github.com/Sabayon/pkgs-checker
 
-go 1.15
+go 1.16
 
 require (
 	github.com/MottainaiCI/simplestreams-builder v0.1.0
