@@ -55,6 +55,7 @@ func newGenMetadataCommand() *cobra.Command {
 			dbPkgsDir, _ := cmd.Flags().GetString("db-pkgs-dir-path")
 			verbose, _ := cmd.Flags().GetBool("verbose")
 			to, _ := cmd.Flags().GetString("to")
+			quiet, _ := cmd.Flags().GetBool("quiet")
 
 			var err error
 			var opts *gentoo.PortageUseParseOpts = &gentoo.PortageUseParseOpts{
@@ -83,13 +84,19 @@ func newGenMetadataCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
+			if len(pkgs) == 0 {
+				fmt.Println("No packages matched.")
+				os.Exit(1)
+			}
+
 			for _, p := range pkgs {
 
 				fmt.Println(
-					fmt.Sprintf("Package: %s-%s:%s", p.GetPackageName(), p.GetPVR(), p.Slot),
+					fmt.Sprintf("Generate metadata to dir %s for package %s-%s:%s",
+						to, p.GetPackageName(), p.GetPVR(), p.Slot),
 				)
 
-				if len(p.CONTENTS) > 0 {
+				if len(p.CONTENTS) > 0 && !quiet {
 					fmt.Println("CONTENTS:")
 					for _, e := range p.CONTENTS {
 						fmt.Println(e)
@@ -114,6 +121,7 @@ func newGenMetadataCommand() *cobra.Command {
 		"Generate medata tree to the specified path.")
 	flags.StringP("db-pkgs-dir-path", "p", "/var/db/pkg",
 		"Path of the portage metadata.")
+	flags.Bool("quiet", false, "Quiet output.")
 
 	return cmd
 }
