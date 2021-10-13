@@ -1,6 +1,6 @@
 /*
 
-Copyright (C) 2017-2019  Daniele Rondina <geaaru@sabayonlinux.org>
+Copyright (C) 2017-2021  Daniele Rondina <geaaru@sabayonlinux.org>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ import (
 	settings "github.com/spf13/viper"
 )
 
-const PKGS_CHECKER_VERSION = "0.10.0"
+const PKGS_CHECKER_VERSION = "0.10.2"
 const PKGS_CHECKER_EMPTY_PKGHASH = "00000000000000000000000000000000"
 
 func InitConcurrency() {
