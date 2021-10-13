@@ -152,17 +152,18 @@ func (o *PortageUseParseOpts) IsPkgAdmit(pkg string) bool {
 		}
 
 		for _, f := range o.Packages {
-			r := regexp.MustCompile(f)
-			if r != nil {
-				if r.MatchString(pkg) {
+			gpF, err := ParsePackageStr(f)
+			if err == nil {
+				admitted, _ := gpF.Admit(gp)
+				if admitted {
 					ans = true
 					break
 				} else if o.Verbose {
-					fmt.Println(fmt.Sprintf("[%s] doesn't match with regex %s.",
+					fmt.Println(fmt.Sprintf("[%s] doesn't match %s.",
 						pkg, f))
 				}
 			} else {
-				fmt.Println("WARNING: Regex " + f + " not compiled.")
+				fmt.Println("WARNING: Package " + f + " invalid: " + err.Error() + ".")
 			}
 		}
 	} else {
