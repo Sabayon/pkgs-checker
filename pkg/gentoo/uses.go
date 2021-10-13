@@ -151,6 +151,15 @@ func (o *PortageUseParseOpts) IsPkgAdmit(pkg string) bool {
 			pkg = gp.GetPackageName() + ":0"
 		}
 
+		// Ignoring sub-slot
+		if strings.Contains(gp.Slot, "/") {
+			gp.Slot = gp.Slot[0:strings.Index(gp.Slot, "/")]
+			if o.Verbose {
+				fmt.Println(
+					fmt.Sprintf("[%s] Force using slot %s", pkg, gp.Slot))
+			}
+		}
+
 		for _, f := range o.Packages {
 			gpF, err := ParsePackageStr(f)
 			if err == nil {
