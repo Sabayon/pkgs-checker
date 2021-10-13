@@ -601,7 +601,7 @@ func (e PortageContentElem) String() string {
 	case "obj":
 		ans += " " + e.Hash + " " + e.UnixTimestamp
 	case "sym":
-		ans += " " + "->" + e.Link + " " + e.UnixTimestamp
+		ans += " " + "-> " + e.Link + " " + e.UnixTimestamp
 	default:
 	}
 	return ans
