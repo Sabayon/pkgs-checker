@@ -578,19 +578,23 @@ func GetCONTENTS(file string) ([]PortageContentElem, error) {
 
 		if len(words) > 1 {
 
+			// File with spaces are available in multiple words.
+
 			elem := PortageContentElem{
 				Type: words[0],
-				File: words[1],
 			}
 
 			switch words[0] {
 			case "dir":
+				elem.File = strings.Join(words[1:], " ")
 			case "obj":
-				elem.Hash = words[2]
-				elem.UnixTimestamp = words[3]
+				elem.File = strings.Join(words[1:len(words)-2], " ")
+				elem.Hash = strings.Join(words[len(words)-2:len(words)-1], " ")
+				elem.UnixTimestamp = words[len(words)-1]
 			case "sym":
-				elem.Link = words[3]
-				elem.UnixTimestamp = words[4]
+				elem.File = strings.Join(words[1:len(words)-3], " ")
+				elem.Link = words[len(words)-2]
+				elem.UnixTimestamp = words[len(words)-1]
 			default:
 				continue
 			}
