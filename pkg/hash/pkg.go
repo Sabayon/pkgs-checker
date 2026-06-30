@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
+
 package hash
 
 import (
@@ -24,13 +25,12 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	h "hash"
+	"hash"
 	"io"
 	"sort"
 
-	logger "github.com/sirupsen/logrus"
-
 	commons "github.com/Sabayon/pkgs-checker/pkg/commons"
+	logger "github.com/sirupsen/logrus"
 )
 
 const BYTE_BUFFER_LEN = 100
@@ -49,21 +49,21 @@ type Package struct {
 type PackageSorter []Package
 
 func NewPackage(pkg string, l *logger.Logger) (*Package, error) {
-
-	var log *logger.Logger = nil
-
 	if pkg == "" {
 		return nil, errors.New("Invalid pkg value")
 	}
-	if l == nil {
-		// Use standard logger
+
+	log := l
+	if log == nil {
 		log = logger.StandardLogger()
-	} else {
-		log = l
 	}
 
-	return &Package{pkg: pkg, skipped: 0,
-		logger: log, files: make(map[string][]byte)}, nil
+	return &Package{
+		pkg:     pkg,
+		skipped: 0,
+		logger:  log,
+		files:   make(map[string][]byte),
+	}, nil
 }
 
 func (p *Package) AddFile(f string, hash []byte) {
@@ -84,57 +84,55 @@ func (p *Package) CheckSum() string {
 
 func (p *Package) String() string {
 	return fmt.Sprintf(
-		`Package: {
-	pkg: %s,
-	basename: %s,
-	abspath: %s,
-	checksum: %s,
-	files: %d,
-	dirs: %d,
-	skipped: %d
-}`,
-		p.pkg, p.basename, p.abspath, p.checksum, len(p.files), len(p.dirs), p.skipped)
+		`Package: { pkg: %s, basename: %s, abspath: %s, checksum: %s, files: %d, dirs: %d, skipped: %d }`,
+		p.pkg,
+		p.basename,
+		p.abspath,
+		p.checksum,
+		len(p.files),
+		len(p.dirs),
+		p.skipped,
+	)
 }
 
 func (p *Package) ProcessTarFile(tarReader *tar.Reader, name string) error {
-
-	// Read file
-	var err error
-	var buf []byte = make([]byte, BYTE_BUFFER_LEN)
-	var pb []byte
-	var n_bytes int
-	var fmd5 h.Hash = md5.New()
+	buf := make([]byte, BYTE_BUFFER_LEN)
+	fmd5 := md5.New()
 
 	for {
-		n_bytes, err = tarReader.Read(buf)
+		nBytes, err := tarReader.Read(buf)
 
-		if n_bytes > 0 {
-			//
-			pb = buf[0:n_bytes]
-			fmd5.Write(pb)
+		if nBytes > 0 {
+			if _, writeErr := fmd5.Write(buf[:nBytes]); writeErr != nil {
+				return writeErr
+			}
 		}
 
 		if err == io.EOF {
-			err = nil
 			break
-		} else if err != nil {
-			return err
 		}
 
+		if err != nil {
+			return err
+		}
 	}
 
-	var h []byte = fmd5.Sum(nil)
-	p.logger.Debugf("[%s] %s - MD5 (without dirs): %s",
-		p.basename, name, hex.EncodeToString(h))
+	fileHash := fmd5.Sum(nil)
 
-	p.AddFile(name, h)
+	p.logger.Debugf(
+		"[%s] %s - MD5 (without dirs): %s",
+		p.basename,
+		name,
+		hex.EncodeToString(fileHash),
+	)
 
-	return err
+	p.AddFile(name, fileHash)
+
+	return nil
 }
 
 func (p *Package) CalculateCRC() error {
-
-	var pmd5 h.Hash = md5.New()
+	var pmd5 hash.Hash = md5.New()
 
 	if len(p.files) == 0 && len(p.dirs) == 0 {
 		p.logger.Warnf("[%s] No directories or files found for CRC.\n", p.pkg)
@@ -142,35 +140,45 @@ func (p *Package) CalculateCRC() error {
 		return nil
 	}
 
-	// Create MD5 with MD5 of all files
 	if len(p.files) > 0 {
-		var files []string
+		files := make([]string, 0, len(p.files))
 
-		for k, _ := range p.files {
+		for k := range p.files {
 			files = append(files, k)
 		}
 
 		sort.Strings(files)
+
 		for _, k := range files {
-			pmd5.Write(p.files[k])
+			if _, err := pmd5.Write(p.files[k]); err != nil {
+				return err
+			}
 		}
 	}
 
-	// Append to MD5 list of directories
 	if len(p.dirs) > 0 {
-
 		sort.Strings(p.dirs)
+
 		for _, k := range p.dirs {
-			pmd5.Write([]byte(k))
+			if _, err := pmd5.Write([]byte(k)); err != nil {
+				return err
+			}
 		}
 	}
 
-	var h []byte = pmd5.Sum(nil)
-	p.checksum = hex.EncodeToString(h)
+	p.checksum = hex.EncodeToString(pmd5.Sum(nil))
 
 	return nil
 }
 
-func (p PackageSorter) Len() int           { return len(p) }
-func (p PackageSorter) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
-func (p PackageSorter) Less(i, j int) bool { return p[i].pkg < p[j].pkg }
+func (p PackageSorter) Len() int {
+	return len(p)
+}
+
+func (p PackageSorter) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
+
+func (p PackageSorter) Less(i, j int) bool {
+	return p[i].pkg < p[j].pkg
+}
